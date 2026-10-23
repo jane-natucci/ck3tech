@@ -2,21 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>CK3 Tech – Perk Trees, Innovations and Culture Comparison</title>
+  <title>CK3 Tech – Perk Trees, Innovations, Cultures and Legacies</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://ck3tech.jane.berlin/">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CK3 Tech">
-  <meta property="og:title" content="CK3 Tech – Perk Trees, Innovations and Culture Comparison">
-  <meta property="og:description" content="Crusader Kings III from the game files: every lifestyle perk tree, all cultural innovations by era, and a side-by-side comparison of cultures at the 867, 1066 and 1178 starts.">
+  <meta property="og:title" content="CK3 Tech – Perk Trees, Innovations, Cultures and Legacies">
+  <meta property="og:description" content="Crusader Kings III from the game files: every lifestyle perk tree, all cultural innovations by era, a side-by-side comparison of cultures at the 867, 1066 and 1178 starts, and every dynasty legacy.">
   <meta property="og:url" content="https://ck3tech.jane.berlin/">
 
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="CK3 Tech – Perk Trees, Innovations and Culture Comparison">
+  <meta name="twitter:title" content="CK3 Tech – Perk Trees, Innovations, Cultures and Legacies">
   <meta name="twitter:description" content="Lifestyle perk trees, cultural innovations by era and a culture comparison for Crusader Kings III.">
-  <meta name="description" content="Crusader Kings III reference read from the game files: the 18 lifestyle perk trees, all cultural innovations by era, and a comparison of every culture's traditions and innovations at the 867, 1066 and 1178 starts.">
+  <meta name="description" content="Crusader Kings III reference read from the game files: the 18 lifestyle perk trees, all cultural innovations by era, a comparison of every culture's traditions and innovations at the 867, 1066 and 1178 starts, and the dynasty legacy tracks.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f4efe4' stroke='%235b3a8c' stroke-width='2'/%3E%3Cg transform='translate(0 -.9)'%3E%3Cpath fill='%235b3a8c' d='M7 22.5 5.6 11.4l5.6 4.6L16 8l4.8 8 5.6-4.6L25 22.5Z'/%3E%3Crect x='7' y='23.6' width='18' height='2.2' rx='1' fill='%235b3a8c'/%3E%3C/g%3E%3C/svg%3E">
   <style>
     :root {
@@ -100,6 +100,31 @@
     table.compare th, table.compare td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
     table.compare td.yes { color: #3c7a3c; font-weight: bold; text-align: center; } table.compare td.no { color: var(--line); text-align: center; }
     table.compare tr.section th { background: var(--accent-soft); font-weight: normal; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    header nav a:hover { border-color: var(--accent); }
+    .search { position: relative; margin-left: auto; }
+    .search input { font: inherit; font-size: 0.9rem; width: 260px; max-width: 100%; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 4px 14px; }
+    .search input:focus { outline: none; border-color: var(--accent); }
+    @media (max-width: 640px) { header nav { margin-left: 0; flex-wrap: wrap; } header nav a { white-space: nowrap; } .search { margin-left: 0; width: 100%; } .search input { width: 100%; } }
+    #results { position: absolute; right: 0; top: calc(100% + 6px); width: min(460px, calc(100vw - 40px)); max-height: 70vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); z-index: 10; padding: 4px 0; }
+    #results[hidden] { display: none; }
+    #results h5 { margin: 8px 12px 2px; font-weight: normal; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    #results .hit { display: flex; align-items: center; gap: 8px; padding: 4px 12px; cursor: pointer; font-size: 0.9rem; }
+    #results .hit img { width: 24px; height: 24px; flex: none; }
+    #results .hit .sub { color: var(--muted); font-size: 0.75rem; margin-left: auto; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+    #results .hit.cur, #results .hit:hover { background: var(--accent-soft); }
+    #results .none { padding: 8px 12px; color: var(--muted); font-size: 0.88rem; }
+    .legacies { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .track { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; }
+    .track.sel { border-color: var(--accent); }
+    .track header { all: unset; display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 4px; }
+    .track header img, img.glyph { background: #e7dfcf; border-radius: 50%; padding: 4px; flex: none; }
+    .track header img { width: 44px; height: 44px; }
+    .track h2 { margin: 0; font-size: 1.05rem; font-weight: normal; }
+    .track .desc { color: var(--muted); font-size: 0.82rem; margin: 0 0 8px; }
+    .track ol { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+    .track li { counter-increment: step; display: flex; gap: 8px; align-items: baseline; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 0.92rem; }
+    .track li::before { content: counter(step); color: var(--muted); font-size: 0.75rem; width: 1em; text-align: right; flex: none; }
+    .track li:hover, .track li.sel { background: var(--accent-soft); }
     footer { color: var(--muted); font-size: 0.75em; padding: 8px 20px; border-top: 1px solid var(--line); }
   </style>
 </head>
@@ -110,7 +135,9 @@
       <a href="#perks" data-view="perks">Perk trees</a>
       <a href="#innovations" data-view="innovations">Innovations</a>
       <a href="#cultures" data-view="cultures">Cultures</a>
+      <a href="#legacies" data-view="legacies">Legacies</a>
     </nav>
+    <div class="search"><input id="gsearch" type="search" placeholder="Search everything…  ( / )" autocomplete="off" aria-label="Search perks, innovations, cultures, traditions and legacies" aria-controls="results"><div id="results" role="listbox" hidden></div></div>
     <span class="ver" id="ver"></span>
   </header>
   <main id="app"><p class="lede">Loading…</p></main>
@@ -120,14 +147,15 @@
     const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const $ = id => document.getElementById(id);
     const app = $("app");
-    let P = null, C = null; // perks data, culture data
+    let P = null, C = null, L = null; // perks data, culture data, legacies data
     // Every file under ck3/ is requested with ?v=<digest of the data>, which CloudFront caches for a year; a new extraction changes the digest. (Left as the literal token when served locally.)
     const V = "__DATA_VERSION__";
     const load = url => fetch(url + "?v=" + V).then(r => { if (!r.ok) throw new Error(url + ": HTTP " + r.status); return r.json(); });
 
     // ---------------------------------------------------------------- routing
-    // #perks[/<lifestyle>[/<perk>]]  #innovations[/<key>]  #cultures[/<bookmark>[/<culture>[,<culture>...]]]
-    const route = () => { const [view = "perks", ...rest] = decodeURIComponent(location.hash.slice(1)).split("/"); return { view: ["perks", "innovations", "cultures"].includes(view) ? view : "perks", rest }; };
+    // #perks[/<lifestyle>[/<perk>]]  #innovations[/<key>]  #cultures[/<bookmark>[/<culture>[,<culture>...]]]  #legacies[/<track>[/<perk>]]
+    const VIEWS = ["perks", "innovations", "cultures", "legacies"];
+    const route = () => { const [view = "perks", ...rest] = decodeURIComponent(location.hash.slice(1)).split("/"); return { view: VIEWS.includes(view) ? view : "perks", rest }; };
     const go = (hash) => { history.replaceState(null, "", "#" + hash); render(); };
 
     async function render() {
@@ -136,6 +164,7 @@
       document.querySelectorAll("header nav a").forEach(a => { if (a.dataset.view === view) a.setAttribute("aria-current", "page"); });
       try {
         if (view === "perks") { P ||= await load("ck3/data.json"); setGv(P); perksView(rest); }
+        else if (view === "legacies") { P ||= await load("ck3/data.json"); L ||= await load("ck3/legacies.json"); setGv(P); legaciesView(rest); }
         else { C ||= await load("ck3/culture.json"); P ||= await load("ck3/data.json"); setGv(P); view === "innovations" ? innovationsView(rest) : culturesView(rest); }
       } catch (e) { app.innerHTML = `<p>Couldn't load the data (${esc(e.message)}). Run <code>ruby extract.rb</code> first.</p>`; }
     }
@@ -179,7 +208,7 @@
     }
     function fmt(m) {
       const v = m.kind === "percent" ? Math.round(m.value * 1000) / 10 : m.value;
-      return `${m.icon ? `<img src="ck3/icons/${m.icon}.png?v=${V}" alt="">` : ""}<span class="${v >= 0 ? "plus" : "minus"}">${v > 0 ? "+" : ""}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}${m.scope ? ` <span class="note">(${esc(m.scope)})</span>` : ""}`;
+      return `${m.icon ? `<img src="ck3/icons/${m.icon}.png?v=${V}" alt="">` : ""}<span class="${(v >= 0) !== !!m.bad ? "plus" : "minus"}">${v > 0 ? "+" : ""}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}${m.scope ? ` <span class="note">(${esc(m.scope)})</span>` : ""}`;
     }
     function perkDetail(key) {
       const p = byKey[key];
@@ -297,16 +326,119 @@
         </table></div>`;
     }
 
+    // ---------------------------------------------------------------- legacies
+    let legFilter = "all", legBy = {}, legPerk = {};
+    function legaciesView([trackKey, perkKey]) {
+      if (!Object.keys(legBy).length) for (const t of L.tracks) { legBy[t.key] = t; for (const p of t.perks) legPerk[p.key] = { track: t, perk: p, step: t.perks.indexOf(p) + 1 }; }
+      const sel = legPerk[perkKey] ? perkKey : null;
+      const selTrack = (sel && legPerk[sel].track.key) || (legBy[trackKey] ? trackKey : null);
+      $("ver").textContent = L.tracks.length + " tracks · " + L.tracks.reduce((n, t) => n + t.perks.length, 0) + " legacy perks";
+      const dlcs = [...new Set(L.tracks.map(t => t.dlc).filter(Boolean))].sort();
+      const shown = L.tracks.filter(t => legFilter === "all" || (legFilter === "base" ? !t.dlc : t.dlc === legFilter));
+      app.innerHTML = `<p class="lede">A dynasty unlocks legacy perks by spending renown on a track. Each track has five perks, taken in order. Tracks from a DLC are only shown to a dynasty head who owns it.</p>
+        <div class="filters"><div class="chips" style="margin:0" role="group" aria-label="Source">${["all", "base", ...dlcs].map(f => `<button data-fl="${esc(f)}" aria-pressed="${legFilter === f}">${f === "all" ? "All" : f === "base" ? "Base game" : esc(f)}</button>`).join("")}</div></div>
+        <div class="legacies">${shown.map(t => `<section class="track${t.key === selTrack ? " sel" : ""}"><header data-go="legacies/${t.key}">${t.icon ? `<img src="ck3/${t.icon}?v=${V}" alt="">` : ""}<div><h2>${esc(t.name)}</h2>${t.dlc ? `<span class="pill dlc">${esc(t.dlc)}</span>` : ""}</div></header>
+          ${t.description ? `<p class="desc">${esc(t.description)}</p>` : ""}<ol>${t.perks.map(p => `<li class="${p.key === sel ? "sel" : ""}" data-go="legacies/${t.key}/${p.key}" tabindex="0" role="button">${esc(p.name)}</li>`).join("")}</ol></section>`).join("") || '<p class="note">None.</p>'}</div>
+        <div id="detail" aria-live="polite">${legDetail(sel, selTrack)}</div>`;
+    }
+    function legDetail(perkKey, trackKey) {
+      if (legPerk[perkKey]) {
+        const { track: t, perk: p, step } = legPerk[perkKey];
+        const prev = t.perks[step - 2], next = t.perks[step];
+        return `<h3>${esc(p.name)}</h3><p class="where">${esc(t.name)} legacy · perk ${step} of ${t.perks.length}${t.dlc ? " · " + esc(t.dlc) : ""}</p>
+          ${p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li class="mod">${fmt(m)}</li>`).join("")}</ul>` : ""}
+          ${p.effects.length ? `<ul>${p.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+          ${!p.modifiers.length && !p.effects.length ? `<p class="note">The game's English text for this perk is built in code, so its effects aren't listed here.</p>` : ""}
+          ${prev ? `<p>Requires: <a data-go="legacies/${t.key}/${prev.key}">${esc(prev.name)}</a></p>` : `<p class="note">The first perk of the track.</p>`}
+          ${next ? `<p>Leads to: <a data-go="legacies/${t.key}/${next.key}">${esc(next.name)}</a></p>` : `<p class="note">The last perk of the track.</p>`}`;
+      }
+      const t = legBy[trackKey];
+      if (!t) return '<p class="note">Select a perk to see what it gives.</p>';
+      return `<h3>${t.icon ? `<img class="glyph" src="ck3/${t.icon}?v=${V}" alt="" width="40" height="40" style="vertical-align:-12px;margin-right:8px;box-sizing:border-box">` : ""}${esc(t.name)}</h3><p class="where">${t.dlc ? esc(t.dlc) : "Base game"} · ${t.perks.length} perks</p>${t.description ? `<p><em>${esc(t.description)}</em></p>` : ""}
+        <ol>${t.perks.map(p => `<li><a data-go="legacies/${t.key}/${p.key}">${esc(p.name)}</a>${p.modifiers.length ? ` <span class="note">${p.modifiers.map(m => esc(m.label)).join(", ")}</span>` : ""}</li>`).join("")}</ol>`;
+    }
+
+    // ---------------------------------------------------------------- search
+    // One index over everything, built from all three data files the first time the box is used.
+    let SX = null, hits = [], cur = -1;
+    const norm = s => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    async function buildIndex() {
+      if (SX) return SX;
+      [P, C, L] = await Promise.all([P || load("ck3/data.json"), C || load("ck3/culture.json"), L || load("ck3/legacies.json")]);
+      const ms = o => (o.modifiers || []).map(m => m.label).concat(o.effects || [], o.description || "").join(" ");
+      const out = [];
+      for (const l of P.lifestyles) for (const t of l.trees) for (const p of t.perks) out.push({ type: "Perk", name: p.name, sub: l.name + " · " + t.name, text: ms(p), icon: `ck3/icons/${p.icon}.png`, go: `perks/${l.key}/${p.key}` });
+      for (const i of C.innovations) out.push({ type: "Innovation", name: i.name, sub: eraName(i.era) + " · " + (i.group_name || ""), text: ms(i) + " " + (i.unlocks || []).map(u => u.name).join(" "), icon: i.icon && `ck3/innovations/${i.icon}.png`, go: `innovations/${i.key}` });
+      for (const c of C.cultures) { const bm = Object.keys(C.bookmarks).find(b => c.exists.includes(b)) || "867.1.1"; out.push({ type: "Culture", name: c.name, sub: (C.pillars[c.heritage]?.name || "") + " heritage", text: "", go: `cultures/${bm}/${c.key}` }); }
+      for (const [k, t] of Object.entries(C.traditions)) out.push({ type: "Tradition", name: t.name, sub: "culture tradition", text: t.description || "", go: "cultures/867.1.1", q: t.name });
+      for (const t of L.tracks) {
+        out.push({ type: "Legacy", name: t.name, sub: (t.dlc || "Base game") + " · track", text: t.description || "", icon: t.icon && "ck3/" + t.icon, go: `legacies/${t.key}` });
+        for (const p of t.perks) out.push({ type: "Legacy", name: p.name, sub: t.name + " legacy", text: ms(p), icon: t.icon && "ck3/" + t.icon, go: `legacies/${t.key}/${p.key}` });
+      }
+      out.forEach(o => { o.n = norm(o.name); o.t = norm(o.text); });
+      return (SX = out);
+    }
+    function search(query) {
+      const words = norm(query).split(/\s+/).filter(Boolean);
+      if (!words.length) return [];
+      const scored = [];
+      for (const o of SX) {
+        if (!words.every(w => o.n.includes(w) || o.t.includes(w))) continue;
+        const inName = words.every(w => o.n.includes(w));
+        scored.push({ o, score: (o.n === words.join(" ") ? 0 : o.n.startsWith(words[0]) ? 1 : inName ? 2 : 3) });
+      }
+      return scored.sort((a, b) => a.score - b.score || a.o.name.localeCompare(b.o.name)).map(s => s.o);
+    }
+    const TYPES = ["Perk", "Innovation", "Culture", "Tradition", "Legacy"];
+    function showResults(list, query) {
+      const box = $("results");
+      if (!query.trim()) { box.hidden = true; hits = []; return; }
+      const shown = [];
+      for (const type of TYPES) shown.push(...list.filter(o => o.type === type).slice(0, 6));
+      hits = shown; cur = hits.length ? 0 : -1;
+      let html = "", last = "";
+      hits.forEach((o, i) => {
+        if (o.type !== last) { const n = list.filter(x => x.type === o.type).length; html += `<h5>${o.type === "Legacy" ? "Legacies" : o.type + "s"} (${n})</h5>`; last = o.type; }
+        html += `<div class="hit${i === cur ? " cur" : ""}" role="option" data-hit="${i}">${o.icon ? `<img${o.type === "Legacy" ? ' class="glyph"' : ""} src="${o.icon}?v=${V}" alt="">` : ""}<span>${esc(o.name)}</span><span class="sub">${esc(o.sub)}</span></div>`;
+      });
+      box.innerHTML = html || '<div class="none">Nothing matches.</div>';
+      box.hidden = false;
+    }
+    function openHit(o) {
+      if (!o) return;
+      if (o.q) q = o.q; else if (o.type === "Culture") q = "";
+      $("results").hidden = true; $("gsearch").blur();
+      go(o.go);
+    }
+    const sbox = $("gsearch");
+    sbox.addEventListener("focus", () => { buildIndex().catch(() => {}); });
+    sbox.addEventListener("input", async () => { try { await buildIndex(); showResults(search(sbox.value), sbox.value); } catch (e) { $("results").innerHTML = `<div class="none">Couldn't load the data.</div>`; $("results").hidden = false; } });
+    sbox.addEventListener("keydown", e => {
+      const items = [...$("results").querySelectorAll(".hit")];
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (!items.length) return; cur = (cur + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items.forEach((el, i) => el.classList.toggle("cur", i === cur)); items[cur].scrollIntoView({ block: "nearest" }); }
+      else if (e.key === "Enter") { e.preventDefault(); openHit(hits[cur]); }
+      else if (e.key === "Escape") { sbox.value = ""; $("results").hidden = true; sbox.blur(); }
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(input|textarea|select)$/i.test(e.target.tagName)) { e.preventDefault(); sbox.focus(); sbox.select(); }
+    });
+    document.addEventListener("click", e => {
+      const hit = e.target.closest("[data-hit]");
+      if (hit) { openHit(hits[+hit.dataset.hit]); return; }
+      if (!e.target.closest(".search")) $("results").hidden = true;
+    });
+
     // ---------------------------------------------------------------- events
     document.addEventListener("click", e => {
       const add = e.target.closest("[data-cmp]");
       if (add) { e.stopPropagation(); const { rest } = route(); const bm = C.bookmarks[rest[0]] ? rest[0] : "867.1.1"; let cur = (rest[1] || "").split(",").filter(Boolean); const k = add.dataset.cmp; cur = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k].slice(-3); go("cultures/" + bm + (cur.length ? "/" + cur.join(",") : "")); return; }
       const fg = e.target.closest("[data-fg]"); if (fg) { innFilter.group = fg.dataset.fg; render(); return; }
       const fs = e.target.closest("[data-fs]"); if (fs) { innFilter.skill = fs.dataset.fs; render(); return; }
+      const fl = e.target.closest("[data-fl]"); if (fl) { legFilter = fl.dataset.fl; render(); return; }
       const hit = e.target.closest("[data-go]"); if (hit && !e.target.closest("select, input")) { e.preventDefault(); go(hit.dataset.go); }
     });
     document.addEventListener("keydown", e => {
-      if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node")) { e.preventDefault(); go(e.target.dataset.go); }
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node, .track li")) { e.preventDefault(); go(e.target.dataset.go); }
     });
     if (document.getElementById("buildLink").href.includes("__BUILD" + "_SHA__")) document.getElementById("buildLink").remove();
     if (!location.hash) history.replaceState(null, "", "#perks");

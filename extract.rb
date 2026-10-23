@@ -102,7 +102,7 @@ def clean(text, depth = 0)
   text = text.gsub(/\$([A-Za-z0-9_.\-']+)(?:\|[^$]*)?\$/) { depth < 4 && LOC[$1] ? clean(LOC[$1], depth + 1) : "" }
   text = text.gsub(/\[([A-Za-z0-9_]+)\|[A-Za-z]*\]/) { $1.tr("_", " ") }
   text = text.gsub(/\s*\[[^\]]*\]\s*\z/, " …").gsub(/\[[^\]]*\]/, "")
-  text = text.gsub(/#[A-Za-z_]*\s?/, "").gsub(/£[^£]*£/, "").gsub('\n', " ").gsub(/\\"/, '"')
+  text = text.gsub(/#(?:[A-Za-z_]+\s?|!)/, "").gsub(/£[^£]*£/, "").gsub('\n', " ").gsub(/\\"/, '"')
   text.gsub(/\s+/, " ").strip
 end
 
@@ -141,6 +141,20 @@ def resolve(value, constants)
   SCRIPT_VALUES[value] if value.is_a?(String)
 end
 
+# --- How the game shows each modifier: common/modifier_definition_formats says whether its
+# number is a percentage (percent = yes) and whether a rise is bad (color = bad). -------------
+MOD_FORMATS = {}
+Dir.glob(File.join(GAME, "common/modifier_definition_formats/*.txt")).sort.each do |file|
+  Script.parse(File.read(file, encoding: "bom|utf-8")).each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array)
+
+    MOD_FORMATS[key] = { percent: Script.get(body, "percent") == "yes", bad: Script.get(body, "color") == "bad" }
+  end
+end
+
+def mod_kind(key) = (MOD_FORMATS[key] ? MOD_FORMATS[key][:percent] : key.end_with?("_mult")) ? "percent" : "number"
+def mod_bad?(key) = MOD_FORMATS.dig(key, :bad) ? true : false
+
 # --- The perks ---------------------------------------------------------------------------
 perks = []
 Dir.glob(File.join(GAME, "common/lifestyle_perks/*.txt")).sort.each do |file|
@@ -155,7 +169,7 @@ Dir.glob(File.join(GAME, "common/lifestyle_perks/*.txt")).sort.each do |file|
 
       raw = LOC[mkey] || LOC["MOD_#{mkey.upcase}"]
       label = raw && !raw.include?("[Get") ? clean(raw) : humanize(mkey.sub(/_(add|mult)\z/, ""))
-      { key: mkey, label: label, value: number, kind: mkey.end_with?("_mult") ? "percent" : "number" }
+      { key: mkey, label: label, value: number, kind: mod_kind(mkey), bad: mod_bad?(mkey) }
     end
 
     effect_texts = []
@@ -268,7 +282,7 @@ def numeric_mods(block)
 
     raw = LOC[k] || LOC["MOD_#{k.upcase}"]
     label = raw && !raw.include?("[Get") ? clean(raw) : humanize(k.sub(/_(add|mult)\z/, ""))
-    { key: k, label: label, value: v, kind: k.end_with?("_mult") ? "percent" : "number" }
+    { key: k, label: label, value: v, kind: mod_kind(k), bad: mod_bad?(k) }
   end
 end
 
@@ -415,6 +429,85 @@ File.write(File.join(OUT_DIR, "culture.json"), JSON.generate({
 puts "Wrote ck3/culture.json: #{innovations.size} innovations (#{innovations.count { |i| i[:icon] }} icons), #{eras.size} eras, #{traditions.size} traditions, #{pillars.size} pillars, #{cultures.size} cultures"
 puts "Cultures existing at 867: #{cultures.count { |c| c[:exists].include?('867.1.1') }}, 1066: #{cultures.count { |c| c[:exists].include?('1066.9.15') }}, 1178: #{cultures.count { |c| c[:exists].include?('1178.10.1') }}; with a history (own or heritage): #{cultures.count { |c| (histories[c[:key]] || histories[c[:heritage]]) }}"
 puts "Traditions used by cultures but not defined: #{missing_traditions.first(6).inspect} (#{missing_traditions.size})"
+
+# =====================================================================================
+# Dynasty legacies: tracks (common/dynasty_legacies) of five perks each (common/dynasty_perks)
+# =====================================================================================
+DLC_FEATURES = {
+  "the_northern_lords" => "The Northern Lords", "hybridize_culture" => "The Royal Court",
+  "the_fate_of_iberia" => "The Fate of Iberia", "tours_and_tournaments" => "Tours and Tournaments",
+  "legacy_of_persia" => "Legacy of Persia", "legends" => "Legends of the Dead", "legends_of_the_dead" => "Legends of the Dead",
+  "roads_to_power" => "Roads to Power", "khans_of_the_steppe" => "Khans of the Steppe",
+  "all_under_heaven" => "All Under Heaven", "by_god_alone" => "By God Alone"
+}.freeze
+
+def find_values(block, wanted)
+  (block || []).flat_map do |k, v|
+    (k == wanted && v.is_a?(String) ? [ v ] : []) + (v.is_a?(Array) ? find_values(v, wanted) : [])
+  end
+end
+
+def effect_texts_of(block)
+  texts = []
+  walk = lambda do |b|
+    b.each do |k, v|
+      next unless v.is_a?(Array)
+
+      if %w[custom_description_no_bullet custom_description custom_tooltip].include?(k)
+        text_key = Script.get(v, "text")
+        text = text_key.is_a?(String) ? effect_text(text_key) : nil
+        texts << text if text && !text.empty?
+      end
+      walk.call(v)
+    end
+  end
+  walk.call(block || [])
+  texts.uniq
+end
+
+FileUtils.mkdir_p(File.join(OUT_DIR, "legacies"))
+legacy_perks = {}
+Dir.glob(File.join(GAME, "common/dynasty_perks/*.txt")).sort.each do |file|
+  parsed = read_script(file)
+  constants = parsed.select { |k, v| k.is_a?(String) && k.start_with?("@") && v.is_a?(Numeric) }.to_h
+  parsed.each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array) && Script.get(body, "legacy")
+
+    mods = (Script.get(body, "character_modifier") || []).filter_map do |mkey, mval|
+      number = mkey && resolve(mval, constants)
+      next unless number
+
+      raw = LOC[mkey] || LOC["MOD_#{mkey.upcase}"]
+      label = raw && !raw.include?("[Get") ? clean(raw) : humanize(mkey.sub(/_(add|mult)\z/, ""))
+      { key: mkey, label: label, value: number, kind: mod_kind(mkey), bad: mod_bad?(mkey) }
+    end
+    mods.each { |m| m[:icon] = modifier_icon(m[:key], m[:value]) }
+    (legacy_perks[Script.get(body, "legacy")] ||= []) << {
+      key: key, name: loc("#{key}_name") || humanize(key), modifiers: mods, effects: effect_texts_of(Script.get(body, "effect"))
+    }
+  end
+end
+
+legacy_tracks = {}
+Dir.glob(File.join(GAME, "common/dynasty_legacies/*.txt")).sort.each do |file|
+  read_script(file).each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array) && legacy_perks[key]
+    next if legacy_tracks[key]
+
+    feature = find_values(body, "has_dlc_feature").first
+    icon = "legacies/#{key}.png"
+    convert(File.join(ICONS, "dynasty/#{key}.dds"), File.join(OUT_DIR, icon), "-resize", "96x96") or icon = nil
+    legacy_tracks[key] = {
+      key: key, name: loc("#{key}_name") || humanize(key.sub(/_legacy_track\z|_track\z/, "")),
+      description: loc("#{key}_desc"), dlc: feature && (DLC_FEATURES[feature] || humanize(feature)),
+      icon: icon, perks: legacy_perks[key]
+    }
+  end
+end
+legacies = legacy_tracks.values.sort_by { |t| [ t[:dlc] ? 1 : 0, t[:dlc].to_s, t[:name] ] }
+File.write(File.join(OUT_DIR, "legacies.json"), JSON.generate({ tracks: legacies }))
+puts "Wrote ck3/legacies.json: #{legacies.size} tracks, #{legacies.sum { |t| t[:perks].size }} perks; DLC tracks: #{legacies.count { |t| t[:dlc] }}"
+puts "Perks per track: #{legacies.map { |t| t[:perks].size }.tally.inspect}; without modifier or effect: #{legacies.flat_map { |t| t[:perks] }.count { |p| p[:modifiers].empty? && p[:effects].empty? }}; tracks without icon: #{legacies.count { |t| !t[:icon] }}"
 
 version = begin
   JSON.parse(File.read(File.join(ROOT, "launcher/launcher-settings.json")))["rawVersion"]

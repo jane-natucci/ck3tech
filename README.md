@@ -1,17 +1,19 @@
 # CK3 Tech
 
-**https://ck3tech.jane.berlin** — Crusader Kings III from the game's own files, in three views:
+**https://ck3tech.jane.berlin** — Crusader Kings III from the game's own files, in four views and a search box:
 
 - **Perk trees:** the 6 lifestyles, 18 trees and 162 perks, laid out the way the game draws them, with what each perk requires, what it leads to, its modifiers and its effect text.
 - **Innovations:** all 106 cultural innovations by era, filterable by type and skill, with what each unlocks and how many cultures know it at each start.
 - **Cultures:** 237 cultures with their heritage, language, ethos and traditions, and the innovations they know at the 867, 1066 and 1178 starts. Add up to three to compare them side by side.
+- **Legacies:** the 22 dynasty legacy tracks and their 110 perks, with the DLC each track belongs to.
+- **Search** (press `/`): one box over all perks, innovations, cultures, traditions and legacies, matching names first and effect text second.
 
 Everything is read straight from the game's files, not transcribed by hand.
 
 ## How it works
 
 - `index.html` — the whole site: one static page, plain HTML/CSS/JS, no build step or framework.
-- `extract.rb` — reads a local Crusader Kings III install and writes `ck3/data.json` (perks), `ck3/culture.json` (innovations, cultures, traditions) and the icons, lifestyle emblems and tree backdrops it uses. Plain Ruby, standard library only; needs [ImageMagick](https://imagemagick.org) (`magick`) to convert the game's DDS images.
+- `extract.rb` — reads a local Crusader Kings III install and writes `ck3/data.json` (perks), `ck3/culture.json` (innovations, cultures, traditions), `ck3/legacies.json` (dynasty legacy tracks) and the icons, lifestyle emblems and tree backdrops it uses. Plain Ruby, standard library only; needs [ImageMagick](https://imagemagick.org) (`magick`) to convert the game's DDS images.
 - `deploy.sh` — uploads the page and the generated files to S3, served through CloudFront. See [Deploying](#deploying).
 
 The generated files come from Paradox's game data, so they're **not in this repo**. Run the extractor against your own install to get them.
@@ -38,7 +40,7 @@ Two kinds of deploy, because the game data can only be generated where the game 
   ```
 
 > [!IMPORTANT]
-> **The very first deploy must be a full local one** (`ruby extract.rb && ./deploy.sh`). CI has no game data to upload, so until S3 has a `ck3/data.json` and `ck3/culture.json`, the GitHub Action stops with an error saying so.
+> **The very first deploy must be a full local one** (`ruby extract.rb && ./deploy.sh`). CI has no game data to upload, so until S3 has a `ck3/data.json`, `ck3/culture.json` and `ck3/legacies.json`, the GitHub Action stops with an error saying so.
 
 Local deploys use the `personal` AWS profile by default (`AWS_PROFILE` overrides it). CI logs into AWS through GitHub's OIDC, into a role that can only write to this site's bucket (defined in the site's separate infrastructure config), so no AWS keys are stored in this repo.
 

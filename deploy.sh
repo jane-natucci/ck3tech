@@ -10,7 +10,7 @@
 #                            one, since CI can't generate the data.
 #
 # Every ck3/ URL carries ?v=<version>, which CloudFront caches ck3/* on for a
-# year. The version hashes data.json and culture.json plus our own tracked
+# year. The version hashes data.json, culture.json and legacies.json plus our own tracked
 # files in ck3/, so a new extraction or a change to any of those files busts
 # the cache. index.html is sent with no-cache, so a deploy shows up
 # immediately.
@@ -26,22 +26,22 @@ tracked=$(git ls-files ck3)   # our own files in ck3/ (the rest is generated)
 tmp="$(mktemp -d)"
 
 if [ "${1:-}" = "--code-only" ]; then
-  for f in data.json culture.json; do
+  for f in data.json culture.json legacies.json; do
     aws s3 cp "s3://${bucket}/ck3/${f}" "$tmp/${f}" --only-show-errors || {
       echo "No ck3/${f} on S3 yet. The first deploy must be a full one:" >&2
       echo "run 'ruby extract.rb && ./deploy.sh' on a machine with Crusader Kings III installed." >&2
       exit 1
     }
   done
-  data="$tmp/data.json"; culture="$tmp/culture.json"
+  data="$tmp/data.json"; culture="$tmp/culture.json"; legacies="$tmp/legacies.json"
 else
-  for f in data.json culture.json; do
+  for f in data.json culture.json legacies.json; do
     [ -f "ck3/${f}" ] || { echo "No ck3/${f} -- run: ruby extract.rb" >&2; exit 1; }
   done
-  data="ck3/data.json"; culture="ck3/culture.json"
+  data="ck3/data.json"; culture="ck3/culture.json"; legacies="ck3/legacies.json"
 fi
 
-version="$(cat "$data" "$culture" $tracked | md5)"
+version="$(cat "$data" "$culture" "$legacies" $tracked | md5)"
 version="${version:0:10}"
 # The footer's build link points at the deployed commit on GitHub. A local
 # deploy with uncommitted changes to the page or our files says so.
