@@ -58,7 +58,14 @@ module Script
     value = lambda do
       tok = tokens[pos]
       pos += 1
-      tok == "{" ? block.call : scalar(tok)
+      if tok == "{"
+        block.call
+      elsif tokens[pos] == "{" && tok.match?(/\A[a-z_]+\z/) # typed blocks: hsv{ ... }, rgb{ ... }, list{ ... }
+        pos += 1
+        block.call
+      else
+        scalar(tok)
+      end
     end
     block.call
   end
@@ -243,6 +250,171 @@ icon_names.each do |name|
   _out, err, status = Open3.capture3("magick", src, *args, "-resize", "96x96", File.join(ICON_DIR, "#{name}.png"))
   warn "icon #{name}: #{err.strip}" unless status.success?
 end
+
+# =====================================================================================
+# Innovations, eras, cultures, traditions and what each culture knows at each start date
+# =====================================================================================
+CULTURE = File.join(GAME, "common/culture")
+FileUtils.mkdir_p(File.join(OUT_DIR, "innovations"))
+BOOKMARKS = { "867.1.1" => "867", "1066.9.15" => "1066", "1178.10.1" => "1178" }.freeze
+
+def read_script(path) = Script.parse(File.read(path, encoding: "bom|utf-8"))
+
+def date_key(text) = text.to_s.split(".").map(&:to_i).then { |y, m, d| [ y || 0, m || 1, d || 1 ] }
+
+def numeric_mods(block)
+  (block || []).filter_map do |k, v|
+    next unless k && v.is_a?(Numeric)
+
+    raw = LOC[k] || LOC["MOD_#{k.upcase}"]
+    label = raw && !raw.include?("[Get") ? clean(raw) : humanize(k.sub(/_(add|mult)\z/, ""))
+    { key: k, label: label, value: v, kind: k.end_with?("_mult") ? "percent" : "number" }
+  end
+end
+
+# --- Eras ---
+eras = read_script(File.join(CULTURE, "eras/00_culture_eras.txt")).filter_map do |key, body|
+  next unless key.is_a?(String) && body.is_a?(Array)
+
+  { key: key, name: loc(key) || humanize(key.sub(/\Aculture_era_/, "")), year: Script.get(body, "year") }
+end
+
+# --- Innovations ---
+innovations = []
+Dir.glob(File.join(CULTURE, "innovations/*.txt")).sort.each do |file|
+  parsed = read_script(file)
+  consts = parsed.select { |k, v| k.is_a?(String) && k.start_with?("@") && v.is_a?(String) }.to_h
+  parsed.each do |key, body|
+    next unless key.is_a?(String) && key.start_with?("innovation_") && body.is_a?(Array) && Script.get(body, "culture_era")
+
+    icon_ref = Script.get(body, "icon")
+    icon_path = icon_ref.is_a?(String) ? (icon_ref.start_with?("@") ? consts[icon_ref] : icon_ref) : nil
+    unlocks = []
+    { "unlock_building" => "building", "unlock_maa" => "men-at-arms", "unlock_law" => "law", "unlock_casus_belli" => "casus belli" }.each do |field, kind|
+      Script.all(body, field).each do |v|
+        next unless v.is_a?(String)
+
+        label = loc(v) || loc("#{field.sub('unlock_', '')}_#{v}") || loc("#{v}_name") || humanize(v)
+        unlocks << { kind: kind, key: v, name: label }
+      end
+    end
+    customs = Script.all(body, "custom").filter_map { |v| v.is_a?(String) ? (loc(v) || nil) : nil }
+    regions = Script.all(body, "region").flat_map { |v| v.is_a?(Array) ? v.map(&:last) : [ v ] }.select { |v| v.is_a?(String) }
+    mods = numeric_mods(Script.get(body, "character_modifier")) + numeric_mods(Script.get(body, "county_modifier")).map { |m| m.merge(scope: "county") }
+    flags = Script.all(body, "flag").select { |v| v.is_a?(String) }
+    innovations << {
+      key: key,
+      name: loc(key) || humanize(key.sub(/\Ainnovation_/, "")),
+      description: loc("#{key}_desc"),
+      era: Script.get(body, "culture_era"),
+      skill: Script.get(body, "skill"),
+      group: Script.get(body, "group"),
+      group_name: loc(Script.get(body, "group").to_s) || humanize(Script.get(body, "group").to_s.sub(/\Aculture_group_/, "")),
+      icon: key,
+      icon_path: icon_path,
+      regional: flags.any? { |f| f.include?("regional") } || !regions.empty?,
+      regions: regions,
+      unlocks: unlocks,
+      effects: customs.uniq,
+      modifiers: mods
+    }
+  end
+end
+innovations.uniq! { |i| i[:key] }
+innovations.each do |i|
+  next unless i[:icon_path]
+
+  src = File.join(GAME, i[:icon_path])
+  ok = convert(src, File.join(OUT_DIR, "innovations/#{i[:key]}.png"), "-resize", "72x72")
+  i[:icon] = ok ? i[:key] : nil
+  i.delete(:icon_path)
+end
+innovations.each { |i| i.delete(:icon_path) }
+
+# --- Traditions ---
+traditions = {}
+Dir.glob(File.join(CULTURE, "traditions/*.txt")).sort.each do |file|
+  read_script(file).each do |key, body|
+    next unless key.is_a?(String) && key.start_with?("tradition_") && body.is_a?(Array)
+
+    traditions[key] = {
+      name: loc("#{key}_name") || loc(key) || humanize(key.sub(/\Atradition_/, "")),
+      description: loc("#{key}_desc"),
+      category: Script.get(body, "category")
+    }
+  end
+end
+
+# --- Pillars (ethos, heritage, language, martial custom) ---
+pillars = {}
+Dir.glob(File.join(CULTURE, "pillars/*.txt")).sort.each do |file|
+  read_script(file).each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array) && Script.get(body, "type")
+
+    pillars[key] = { name: loc(key) || humanize(key.sub(/\A(ethos|heritage|language|martial_custom|head_determination)_/, "")), type: Script.get(body, "type"), description: loc("#{key}_desc") }
+  end
+end
+
+# --- Cultures ---
+raw_cultures = {}
+Dir.glob(File.join(CULTURE, "cultures/*.txt")).sort.each do |file|
+  next if File.basename(file) == "00_dead.txt" # cultures that no longer exist at any start
+
+  read_script(file).each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array) && Script.get(body, "heritage")
+
+    trad_block = Script.get(body, "traditions")
+    raw_cultures[key] = {
+      key: key,
+      name: loc(key) || humanize(key),
+      heritage: Script.get(body, "heritage"),
+      language: Script.get(body, "language"),
+      ethos: Script.get(body, "ethos"),
+      martial_custom: Script.get(body, "martial_custom"),
+      traditions: (trad_block.is_a?(Array) ? trad_block.map(&:last).select { |v| v.is_a?(String) } : []),
+      # Traditions only with a DLC, and the plain one a player without it gets instead.
+      dlc_traditions: Script.all(body, "dlc_tradition").filter_map do |entry|
+        next unless entry.is_a?(Array) && Script.get(entry, "trait").is_a?(String)
+
+        { key: Script.get(entry, "trait"), dlc: Script.get(entry, "requires_dlc_flag"), fallback: Script.get(entry, "fallback") }
+      end,
+      parents: (Script.get(body, "parents").is_a?(Array) ? Script.get(body, "parents").map(&:last) : []),
+      created: Script.get(body, "created")&.to_s
+    }
+  end
+end
+
+# What a culture knows at a date: its own history file, else its heritage's (the game's rule).
+histories = {}
+Dir.glob(File.join(GAME, "history/cultures/*.txt")).sort.each do |file|
+  entries = read_script(file).filter_map do |date, body|
+    next unless date.is_a?(String) && date.match?(/\A\d+\.\d+\.\d+\z/) && body.is_a?(Array)
+
+    { date: date_key(date), discover: Script.all(body, "discover_innovation").select { |v| v.is_a?(String) }, era: Script.get(body, "join_era") }
+  end
+  histories[File.basename(file, ".txt")] = entries
+end
+
+known_at = lambda do |culture, bookmark|
+  entries = histories[culture[:key]] || histories[culture[:heritage]] || []
+  cutoff = date_key(bookmark)
+  upto = entries.select { |e| (e[:date] <=> cutoff) <= 0 }
+  { innovations: upto.flat_map { |e| e[:discover] }.uniq, era: upto.reverse.find { |e| e[:era] }&.dig(:era) || eras.first[:key] }
+end
+
+cultures = raw_cultures.values.map do |c|
+  at = BOOKMARKS.keys.to_h { |b| [ b, known_at.call(c, b) ] }
+  c.merge(at: at, exists: BOOKMARKS.keys.select { |b| c[:created].nil? || (date_key(c[:created]) <=> date_key(b)) <= 0 })
+end
+used_traditions = cultures.flat_map { |c| c[:traditions] + c[:dlc_traditions].flat_map { |t| [ t[:key], t[:fallback] ].compact } }.uniq
+missing_traditions = used_traditions - traditions.keys
+
+File.write(File.join(OUT_DIR, "culture.json"), JSON.generate({
+  bookmarks: BOOKMARKS, eras: eras, innovations: innovations, traditions: traditions, pillars: pillars, cultures: cultures
+}))
+puts "Wrote ck3/culture.json: #{innovations.size} innovations (#{innovations.count { |i| i[:icon] }} icons), #{eras.size} eras, #{traditions.size} traditions, #{pillars.size} pillars, #{cultures.size} cultures"
+puts "Cultures existing at 867: #{cultures.count { |c| c[:exists].include?('867.1.1') }}, 1066: #{cultures.count { |c| c[:exists].include?('1066.9.15') }}, 1178: #{cultures.count { |c| c[:exists].include?('1178.10.1') }}; with a history (own or heritage): #{cultures.count { |c| (histories[c[:key]] || histories[c[:heritage]]) }}"
+puts "Traditions used by cultures but not defined: #{missing_traditions.first(6).inspect} (#{missing_traditions.size})"
 
 version = begin
   JSON.parse(File.read(File.join(ROOT, "launcher/launcher-settings.json")))["rawVersion"]

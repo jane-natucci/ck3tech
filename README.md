@@ -1,11 +1,15 @@
 # CK3 tech (prototype)
 
-The Crusader Kings III **lifestyle perk trees** as graphs: 6 lifestyles, 18 trees, 162 perks, laid out the way the game draws them (positions come from the game files), with what each perk requires, what it leads to, and its modifiers and effect text.
+Three views of Crusader Kings III, all read from the game files:
+
+- **Perk trees:** 6 lifestyles, 18 trees, 162 perks, laid out the way the game draws them, with what each perk requires, what it leads to, its modifiers and effect text.
+- **Innovations:** all 106 cultural innovations by era, filterable by type and skill, with what each unlocks and how many cultures know it at each start.
+- **Cultures:** 237 cultures with their heritage, language, ethos, traditions and the innovations they know at the 867, 1066 and 1178 starts; add up to three to compare them side by side.
 
 Everything is read from the game's own files, not transcribed by hand.
 
 - `index.html` — the whole page: plain HTML/CSS/JS, no build step.
-- `extract.rb` — reads a local CK3 install and writes `ck3/data.json` and the icons (`ck3/icons/*.png`, needs ImageMagick for the DDS files). Plain Ruby, standard library only.
+- `extract.rb` — reads a local CK3 install and writes `ck3/data.json` (perks), `ck3/culture.json` (innovations, cultures, traditions) and the icons and backdrops (PNG/JPG; needs ImageMagick for the DDS files). Plain Ruby, standard library only.
 
 ```bash
 ruby extract.rb                       # default Steam path on macOS, or pass the install folder

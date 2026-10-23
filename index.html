@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>CK3 Lifestyle Perk Trees – Every Perk, Parent and Modifier</title>
+  <title>CK3 Tech – Perk Trees, Innovations and Culture Comparison</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Crusader Kings III lifestyle perk trees: all 6 lifestyles, 18 trees and 162 perks laid out as the game draws them, with what each one requires and gives. Read from the game files.">
+  <meta name="description" content="Crusader Kings III reference read from the game files: the 18 lifestyle perk trees, all cultural innovations by era, and a comparison of every culture's traditions and innovations at the 867, 1066 and 1178 starts.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f4efe4' stroke='%235b3a8c' stroke-width='2'/%3E%3Cpath fill='%235b3a8c' d='M7 22.5 5.6 11.4l5.6 4.6L16 8l4.8 8 5.6-4.6L25 22.5Z'/%3E%3Crect x='7' y='23.6' width='18' height='2.2' rx='1' fill='%235b3a8c'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -48,72 +48,114 @@
     #detail .plus { color: #3c7a3c; } #detail .minus { color: #a8402d; }
     #detail a { color: var(--accent); cursor: pointer; }
     #detail .note { color: var(--muted); font-size: 0.88rem; }
+
+    header nav { display: flex; gap: 6px; margin-left: 10px; }
+    header nav a { color: var(--ink); text-decoration: none; padding: 4px 13px; border: 1px solid var(--line); border-radius: 999px; font-size: 0.92rem; background: var(--panel); }
+    header nav a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .erastrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    @media (max-width: 900px) { .erastrip { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .erastrip { grid-template-columns: 1fr; } }
+    .era { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 10px 12px; }
+    .era h2 { margin: 0 0 8px 4px; font-size: 0.95rem; font-weight: normal; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px 6px; }
+    .tile { all: unset; box-sizing: border-box; cursor: pointer; text-align: center; font-size: 0.72rem; line-height: 1.2; padding: 6px 2px; border-radius: 8px; border: 1px solid transparent; display: block; }
+    .tile:hover, .tile:focus-visible { border-color: var(--accent); }
+    .tile.sel { background: var(--accent-soft); border-color: var(--accent); }
+    .tile img { width: 44px; height: 44px; display: block; margin: 0 auto 3px; }
+    .tile.regional { border-style: dashed; border-color: var(--line); }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; }
+    .filters input, .filters select { font: inherit; font-size: 0.92rem; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; }
+    .filters label { color: var(--muted); font-size: 0.85rem; }
+    .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    table.cultures { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+    table.cultures th, table.cultures td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    table.cultures th { color: var(--muted); font-weight: normal; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; cursor: pointer; white-space: nowrap; background: var(--panel); position: sticky; top: 0; }
+    table.cultures tbody tr { cursor: pointer; }
+    table.cultures tbody tr:hover { background: var(--accent-soft); }
+    table.cultures tbody tr.sel { background: var(--accent-soft); }
+    .pill { display: inline-block; font-size: 0.74rem; border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; margin: 1px 3px 1px 0; background: var(--bg); white-space: nowrap; }
+    .pill.dlc { border-style: dashed; color: var(--muted); }
+    button.add { font: inherit; font-size: 0.78rem; background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); cursor: pointer; padding: 1px 7px; }
+    button.add[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+    #detail .pillrow { margin: 4px 0 10px; }
+    #detail h4 { margin: 14px 0 4px; font-weight: normal; font-size: 0.95rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    #detail .minitiles { display: flex; flex-wrap: wrap; gap: 4px; }
+    #detail .minitiles span { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px 1px 2px; background: var(--bg); cursor: pointer; }
+    #detail .minitiles img { width: 22px; height: 22px; }
+    table.compare { border-collapse: collapse; width: 100%; font-size: 0.86rem; margin-top: 10px; }
+    table.compare th, table.compare td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
+    table.compare td.yes { color: #3c7a3c; font-weight: bold; text-align: center; } table.compare td.no { color: var(--line); text-align: center; }
+    table.compare tr.section th { background: var(--accent-soft); font-weight: normal; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
     footer { color: var(--muted); font-size: 0.75em; padding: 8px 20px; border-top: 1px solid var(--line); }
   </style>
 </head>
 <body>
   <header>
-    <h1>CK3 perk trees</h1>
+    <h1>CK3 tech</h1>
+    <nav aria-label="Sections">
+      <a href="#perks" data-view="perks">Perk trees</a>
+      <a href="#innovations" data-view="innovations">Innovations</a>
+      <a href="#cultures" data-view="cultures">Cultures</a>
+    </nav>
     <span class="ver" id="ver"></span>
   </header>
-  <main>
-    <p class="lede">Every lifestyle perk in Crusader Kings III, laid out the way the game draws each tree. Pick a lifestyle, then a perk to see what it requires and what it gives.</p>
-    <div class="chips" id="chips" role="group" aria-label="Lifestyle"></div>
-    <div class="trees" id="trees"></div>
-    <div id="detail" aria-live="polite"><p class="note">Select a perk.</p></div>
-  </main>
+  <main id="app"><p class="lede">Loading…</p></main>
   <footer>Unofficial fan page. Data and icons come from the Crusader Kings III game files<span id="gv"></span>; Crusader Kings III is © Paradox Interactive.</footer>
 
   <script>
-    const NODE = 24, DX = 100, DY = 96, PADX = 64, PADY = 34;
-    const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    let D, byKey = {}, treeOf = {}, state = { lifestyle: null, sel: null };
+    const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const $ = id => document.getElementById(id);
+    const app = $("app");
+    let P = null, C = null; // perks data, culture data
+    const load = url => fetch(url + "?v=" + Date.now()).then(r => { if (!r.ok) throw new Error(url + ": HTTP " + r.status); return r.json(); });
 
-    fetch("ck3/data.json?v=" + Date.now()).then(r => { if (!r.ok) throw new Error("data.json: HTTP " + r.status); return r.json(); }).then(data => {
-      D = data;
-      document.getElementById("gv").textContent = D.game_version ? " (version " + D.game_version + ")" : "";
-      document.getElementById("ver").textContent = D.lifestyles.reduce((n, l) => n + l.trees.reduce((m, t) => m + t.perks.length, 0), 0) + " perks · 18 trees · 6 lifestyles";
-      for (const l of D.lifestyles) for (const t of l.trees) for (const p of t.perks) { byKey[p.key] = p; treeOf[p.key] = { lifestyle: l, tree: t }; }
-      const hash = decodeURIComponent(location.hash.slice(1));
-      const [ls, perk] = hash.split("/");
-      state.lifestyle = (D.lifestyles.find(l => l.key === ls) || D.lifestyles[0]).key;
-      state.sel = byKey[perk] ? perk : null;
-      if (state.sel) state.lifestyle = treeOf[state.sel].lifestyle.key;
-      render();
-    }).catch(e => { document.getElementById("trees").innerHTML = `<p>Couldn't load the data (${esc(e.message)}). Run <code>ruby extract.rb</code> first.</p>`; });
+    // ---------------------------------------------------------------- routing
+    // #perks[/<lifestyle>[/<perk>]]  #innovations[/<key>]  #cultures[/<bookmark>[/<culture>[,<culture>...]]]
+    const route = () => { const [view = "perks", ...rest] = decodeURIComponent(location.hash.slice(1)).split("/"); return { view: ["perks", "innovations", "cultures"].includes(view) ? view : "perks", rest }; };
+    const go = (hash) => { history.replaceState(null, "", "#" + hash); render(); };
 
-    function render() {
-      const chips = document.getElementById("chips");
-      chips.innerHTML = D.lifestyles.map(l => `<button data-ls="${l.key}" aria-pressed="${l.key === state.lifestyle}">${l.icon ? `<img src="ck3/lifestyles/${l.icon}.png" alt="">` : ""}${esc(l.name)}</button>`).join("");
-      const ls = D.lifestyles.find(l => l.key === state.lifestyle);
-      document.getElementById("trees").innerHTML = ls.trees.map(t => treeSvg(t)).join("");
-      detail();
+    async function render() {
+      const { view, rest } = route();
+      document.querySelectorAll("header nav a").forEach(a => a.toggleAttribute("aria-current", a.dataset.view === view) || a.removeAttribute("aria-current"));
+      document.querySelectorAll("header nav a").forEach(a => { if (a.dataset.view === view) a.setAttribute("aria-current", "page"); });
+      try {
+        if (view === "perks") { P ||= await load("ck3/data.json"); setGv(P); perksView(rest); }
+        else { C ||= await load("ck3/culture.json"); P ||= await load("ck3/data.json"); setGv(P); view === "innovations" ? innovationsView(rest) : culturesView(rest); }
+      } catch (e) { app.innerHTML = `<p>Couldn't load the data (${esc(e.message)}). Run <code>ruby extract.rb</code> first.</p>`; }
     }
+    function setGv(d) { $("gv").textContent = d.game_version ? " (version " + d.game_version + ")" : ""; }
+    window.addEventListener("hashchange", render);
 
-    function treeSvg(tree) {
+    // ---------------------------------------------------------------- perk trees
+    const NODE = 24, DX = 100, DY = 96, PADX = 64, PADY = 34;
+    let byKey = {}, treeOf = {};
+    function perksView([lsKey, perkKey]) {
+      if (!Object.keys(byKey).length) for (const l of P.lifestyles) for (const t of l.trees) for (const p of t.perks) { byKey[p.key] = p; treeOf[p.key] = { lifestyle: l, tree: t }; }
+      $("ver").textContent = P.lifestyles.reduce((n, l) => n + l.trees.reduce((m, t) => m + t.perks.length, 0), 0) + " perks · 18 trees · 6 lifestyles";
+      const sel = byKey[perkKey] ? perkKey : null;
+      const ls = (sel && treeOf[sel].lifestyle) || P.lifestyles.find(l => l.key === lsKey) || P.lifestyles[0];
+      app.innerHTML = `<p class="lede">Every lifestyle perk in Crusader Kings III, laid out the way the game draws each tree. Pick a lifestyle, then a perk to see what it requires and what it gives.</p>
+        <div class="chips" role="group" aria-label="Lifestyle">${P.lifestyles.map(l => `<button data-go="perks/${l.key}" aria-pressed="${l.key === ls.key}">${l.icon ? `<img src="ck3/lifestyles/${l.icon}.png" alt="">` : ""}${esc(l.name)}</button>`).join("")}</div>
+        <div class="trees">${ls.trees.map(t => treeSvg(t, sel)).join("")}</div>
+        <div id="detail" aria-live="polite">${perkDetail(sel)}</div>`;
+    }
+    function treeSvg(tree, sel) {
       const xs = tree.perks.map(p => p.x), ys = tree.perks.map(p => p.y);
       const minx = Math.min(...xs), maxx = Math.max(...xs), maxy = Math.max(...ys), miny = Math.min(...ys);
       const px = p => PADX + (p.x - minx) * DX, py = p => PADY + (p.y - miny) * DY;
       const W = PADX * 2 + (maxx - minx) * DX, H = PADY * 2 + (maxy - miny) * DY + 22;
-      const chain = new Set(); // the selected perk and everything it requires
-      const walk = k => { if (!k || chain.has(k)) return; chain.add(k); (byKey[k]?.parents || []).forEach(walk); };
-      walk(state.sel);
+      const chain = new Set(); const walk = k => { if (!k || chain.has(k)) return; chain.add(k); (byKey[k]?.parents || []).forEach(walk); }; walk(sel);
       const edges = tree.perks.flatMap(p => p.parents.map(pk => {
         const a = byKey[pk]; if (!a || treeOf[pk].tree !== tree) return "";
         const x1 = px(a), y1 = py(a), x2 = px(p), y2 = py(p), my = (y1 + y2) / 2;
-        const on = chain.has(p.key) && chain.has(pk);
-        return `<path class="edge${on ? " on" : ""}" d="M${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}"/>`;
+        return `<path class="edge${chain.has(p.key) && chain.has(pk) ? " on" : ""}" d="M${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}"/>`;
       })).join("");
-      const nodes = tree.perks.map(p => `
-        <g class="node${p.key === state.sel ? " sel" : ""}" data-k="${p.key}" tabindex="0" role="button" aria-label="${esc(p.name)}" transform="translate(${px(p)} ${py(p)})">
-          <circle class="ring" r="${NODE}"/>
-          <image href="ck3/icons/${p.icon}.png" x="${-NODE + 5}" y="${-NODE + 5}" width="${(NODE - 5) * 2}" height="${(NODE - 5) * 2}"/>
-          <text y="${NODE + 14}">${label(p.name)}</text>
-        </g>`).join("");
+      const nodes = tree.perks.map(p => `<g class="node${p.key === sel ? " sel" : ""}" data-go="perks/${treeOf[p.key].lifestyle.key}/${p.key}" tabindex="0" role="button" aria-label="${esc(p.name)}" transform="translate(${px(p)} ${py(p)})">
+          <circle class="ring" r="${NODE}"/><image href="ck3/icons/${p.icon}.png" x="${-NODE + 5}" y="${-NODE + 5}" width="${(NODE - 5) * 2}" height="${(NODE - 5) * 2}"/><text y="${NODE + 14}">${label(p.name)}</text></g>`).join("");
       return `<section class="tree"${tree.backdrop ? ` style="--bd: url('ck3/trees/${tree.backdrop}.jpg')"` : ""}><h2>${esc(tree.name)}</h2><svg class="graph" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(tree.name)} tree">${edges}${nodes}</svg></section>`;
     }
-
-    // A name over at most two lines, so neighbours' labels don't run into each other.
     function label(name) {
       const words = name.split(" "); let first = "", i = 0;
       while (i < words.length && (first + " " + words[i]).trim().length <= 13) { first = (first + " " + words[i]).trim(); i++; }
@@ -121,43 +163,139 @@
       const rest = words.slice(i).join(" ");
       return rest ? `<tspan x="0">${esc(first)}</tspan><tspan x="0" dy="1.15em">${esc(rest)}</tspan>` : esc(first);
     }
-
     function fmt(m) {
       const v = m.kind === "percent" ? Math.round(m.value * 1000) / 10 : m.value;
-      const sign = v > 0 ? "+" : "";
-      return `${m.icon ? `<img src="ck3/icons/${m.icon}.png" alt="">` : ""}<span class="${v >= 0 ? "plus" : "minus"}">${sign}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}`;
+      return `${m.icon ? `<img src="ck3/icons/${m.icon}.png" alt="">` : ""}<span class="${v >= 0 ? "plus" : "minus"}">${v > 0 ? "+" : ""}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}${m.scope ? ` <span class="note">(${esc(m.scope)})</span>` : ""}`;
     }
-
-    function detail() {
-      const el = document.getElementById("detail");
-      const p = byKey[state.sel];
-      if (!p) { el.innerHTML = '<p class="note">Select a perk to see what it requires and what it gives.</p>'; return; }
+    function perkDetail(key) {
+      const p = byKey[key];
+      if (!p) return '<p class="note">Select a perk to see what it requires and what it gives.</p>';
       const { lifestyle, tree } = treeOf[p.key];
-      const requires = p.parents.length ? `<p>Requires: ${p.parents.map(k => `<a data-k="${k}">${esc(byKey[k].name)}</a>`).join(" and ")}</p>` : `<p class="note">A starting perk of the tree: nothing required.</p>`;
+      const link = k => `<a data-go="perks/${treeOf[k].lifestyle.key}/${k}">${esc(byKey[k].name)}</a>`;
       const children = Object.values(byKey).filter(c => c.parents.includes(p.key));
-      const leads = children.length ? `<p>Leads to: ${children.map(c => `<a data-k="${c.key}">${esc(c.name)}</a>`).join(", ")}</p>` : `<p class="note">The end of this branch.</p>`;
-      const mods = p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li class="mod">${fmt(m)}</li>`).join("")}</ul>` : "";
-      const grants = p.trait_name ? `<p><img src="ck3/icons/${p.icon}.png" alt="" width="28" height="28" style="vertical-align:-8px;margin-right:6px">Grants the <strong>${esc(p.trait_name)}</strong> trait.</p>` : "";
-      const effects = p.effects.length ? `<ul>${p.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : "";
-      const none = !mods && !effects && !p.description ? `<p class="note">The game's English text for this perk is built in code, so its effects aren't listed here yet.</p>` : "";
-      el.innerHTML = `<h3>${esc(p.name)}</h3><p class="where">${esc(lifestyle.name)} · ${esc(tree.name)}</p>${p.description ? `<p><em>${esc(p.description)}</em></p>` : ""}${grants}${mods}${effects}${none}${requires}${leads}`;
+      return `<h3>${esc(p.name)}</h3><p class="where">${esc(lifestyle.name)} · ${esc(tree.name)}</p>
+        ${p.description ? `<p><em>${esc(p.description)}</em></p>` : ""}
+        ${p.trait_name ? `<p><img src="ck3/icons/${p.icon}.png" alt="" width="28" height="28" style="vertical-align:-8px;margin-right:6px">Grants the <strong>${esc(p.trait_name)}</strong> trait.</p>` : ""}
+        ${p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li class="mod">${fmt(m)}</li>`).join("")}</ul>` : ""}
+        ${p.effects.length ? `<ul>${p.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+        ${!p.modifiers.length && !p.effects.length && !p.description ? `<p class="note">The game's English text for this perk is built in code, so its effects aren't listed here.</p>` : ""}
+        ${p.parents.length ? `<p>Requires: ${p.parents.map(link).join(" and ")}</p>` : `<p class="note">A starting perk of the tree: nothing required.</p>`}
+        ${children.length ? `<p>Leads to: ${children.map(c => link(c.key)).join(", ")}</p>` : `<p class="note">The end of this branch.</p>`}`;
     }
 
-    function select(key) {
-      state.sel = key; state.lifestyle = treeOf[key].lifestyle.key;
-      history.replaceState(null, "", "#" + state.lifestyle + "/" + key);
-      render();
+    // ---------------------------------------------------------------- innovations
+    let innBy = null, innFilter = { group: "all", skill: "all" };
+    const eraName = k => C.eras.find(e => e.key === k)?.name || k;
+    const skillName = s => s ? s[0].toUpperCase() + s.slice(1) : "";
+    function innKnownBy(key) { // how many cultures know it at each start
+      const out = {};
+      for (const b of Object.keys(C.bookmarks)) out[b] = C.cultures.filter(c => c.exists.includes(b) && c.at[b].innovations.includes(key)).length;
+      return out;
+    }
+    function innovationsView([key]) {
+      innBy ||= Object.fromEntries(C.innovations.map(i => [i.key, i]));
+      $("ver").textContent = C.innovations.length + " innovations · " + C.eras.length + " eras";
+      const sel = innBy[key] ? key : null;
+      const skills = [...new Set(C.innovations.map(i => i.skill))].filter(Boolean).sort();
+      const groups = [...new Set(C.innovations.map(i => i.group_name))].filter(Boolean).sort();
+      const shown = C.innovations.filter(i => (innFilter.group === "all" || i.group_name === innFilter.group) && (innFilter.skill === "all" || i.skill === innFilter.skill));
+      app.innerHTML = `<p class="lede">Every cultural innovation in Crusader Kings III, by era. A culture discovers innovations over time and moves to the next era once enough of the current one are known. Dashed tiles are regional: only some cultures can discover them.</p>
+        <div class="filters"><label>Type</label><div class="chips" style="margin:0">${["all", ...groups].map(g => `<button data-fg="${esc(g)}" aria-pressed="${innFilter.group === g}">${g === "all" ? "All" : esc(g)}</button>`).join("")}</div>
+          <label>Skill</label><div class="chips" style="margin:0">${["all", ...skills].map(s => `<button data-fs="${esc(s)}" aria-pressed="${innFilter.skill === s}">${s === "all" ? "All" : esc(skillName(s))}</button>`).join("")}</div></div>
+        <div class="erastrip">${C.eras.map(e => `<section class="era"><h2>${esc(e.name)} <span class="note">· from ${e.year}</span></h2><div class="tiles">${shown.filter(i => i.era === e.key).map(i => `<button class="tile${i.regional ? " regional" : ""}${i.key === sel ? " sel" : ""}" data-go="innovations/${i.key}" title="${esc(i.name)}">${i.icon ? `<img src="ck3/innovations/${i.icon}.png" alt="">` : ""}${esc(i.name)}</button>`).join("") || '<span class="note">None with these filters.</span>'}</div></section>`).join("")}</div>
+        <div id="detail" aria-live="polite">${innDetail(sel)}</div>`;
+    }
+    function innDetail(key) {
+      const i = innBy[key];
+      if (!i) return '<p class="note">Select an innovation to see what it unlocks and which cultures start with it.</p>';
+      const known = innKnownBy(key);
+      const b = Object.entries(C.bookmarks).map(([date, y]) => `${known[date]} at ${y}`).join(" · ");
+      return `<h3>${i.icon ? `<img src="ck3/innovations/${i.icon}.png" alt="" width="40" height="40" style="vertical-align:-12px;margin-right:8px">` : ""}${esc(i.name)}</h3>
+        <p class="where">${esc(eraName(i.era))} · ${esc(i.group_name)} · ${esc(skillName(i.skill))}${i.regional ? " · regional" : ""}</p>
+        ${i.description ? `<p><em>${esc(i.description)}</em></p>` : ""}
+        ${i.unlocks.length ? `<h4>Unlocks</h4><ul>${i.unlocks.map(u => `<li>${esc(u.name)} <span class="note">(${esc(u.kind)})</span></li>`).join("")}</ul>` : ""}
+        ${i.modifiers.length ? `<h4>Bonuses</h4><ul>${i.modifiers.map(m => `<li class="mod">${fmt(m)}</li>`).join("")}</ul>` : ""}
+        ${i.effects.length ? `<ul>${i.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+        <h4>Known at the start by</h4><p>${esc(b)} of ${C.cultures.filter(c => c.exists.includes("867.1.1")).length} / ${C.cultures.filter(c => c.exists.includes("1066.9.15")).length} / ${C.cultures.filter(c => c.exists.includes("1178.10.1")).length} cultures</p>`;
     }
 
+    // ---------------------------------------------------------------- cultures
+    let cultBy = null, sortKey = "heritage", sortDir = 1, q = "", herFilter = "all";
+    const pil = k => C.pillars[k]?.name || k;
+    const trad = k => C.traditions[k];
+    const tradNames = c => [...c.traditions.map(k => ({ k, dlc: false })), ...c.dlc_traditions.map(t => ({ k: t.key, dlc: t.dlc, fb: t.fallback }))];
+    function culturesView([bm = "867.1.1", sel]) {
+      innBy ||= Object.fromEntries(C.innovations.map(i => [i.key, i]));
+      cultBy ||= Object.fromEntries(C.cultures.map(c => [c.key, c]));
+      if (!C.bookmarks[bm]) bm = "867.1.1";
+      const picked = (sel || "").split(",").filter(k => cultBy[k]);
+      $("ver").textContent = C.cultures.length + " cultures · " + Object.keys(C.traditions).length + " traditions";
+      const heritages = [...new Set(C.cultures.map(c => c.heritage))].sort((a, b) => pil(a).localeCompare(pil(b)));
+      app.innerHTML = `<p class="lede">What each culture is made of and what it knows when the game starts. Pick a start date, then a culture; add up to three with "compare" to see their differences side by side. Dashed traditions need a DLC (a player without it gets a plainer tradition instead).</p>
+        <div class="filters"><div class="chips" style="margin:0" role="group" aria-label="Start date">${Object.entries(C.bookmarks).map(([d, y]) => `<button data-go="cultures/${d}${sel ? "/" + sel : ""}" aria-pressed="${d === bm}">${y}</button>`).join("")}</div>
+          <select id="her" aria-label="Heritage"><option value="all">All heritages</option>${heritages.map(h => `<option value="${h}"${h === herFilter ? " selected" : ""}>${esc(pil(h))}</option>`).join("")}</select>
+          <input id="q" type="search" placeholder="Search a culture or tradition…" value="${esc(q)}"></div>
+        <div id="table"></div>
+        <div id="detail" aria-live="polite"></div>`;
+      $("her").onchange = e => { herFilter = e.target.value; cultTable(bm, picked); };
+      $("q").oninput = e => { q = e.target.value; cultTable(bm, picked); };
+      cultTable(bm, picked);
+      $("detail").innerHTML = picked.length > 1 ? compare(bm, picked) : picked.length === 1 ? cultDetail(bm, cultBy[picked[0]]) : '<p class="note">Select a culture.</p>';
+    }
+    function cultTable(bm, picked) {
+      const ql = q.trim().toLowerCase();
+      let rows = C.cultures.filter(c => c.exists.includes(bm) && (herFilter === "all" || c.heritage === herFilter) &&
+        (!ql || c.name.toLowerCase().includes(ql) || tradNames(c).some(t => trad(t.k)?.name.toLowerCase().includes(ql))));
+      const val = { name: c => c.name, heritage: c => pil(c.heritage), ethos: c => pil(c.ethos), era: c => C.eras.findIndex(e => e.key === c.at[bm].era), inn: c => c.at[bm].innovations.length }[sortKey] || (c => c.name);
+      rows.sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : a.name.localeCompare(b.name)) * sortDir; });
+      const th = (k, t) => `<th data-sort="${k}">${t}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`;
+      $("table").innerHTML = `<div class="tablewrap" style="max-height:60vh;overflow-y:auto"><table class="cultures"><thead><tr><th></th>${th("name", "Culture")}${th("heritage", "Heritage")}${th("ethos", "Ethos")}<th>Traditions</th>${th("era", "Era")}${th("inn", "Innovations")}</tr></thead><tbody>
+        ${rows.map(c => `<tr class="${picked.includes(c.key) ? "sel" : ""}" data-go="cultures/${bm}/${c.key}"><td><button class="add" data-cmp="${c.key}" aria-pressed="${picked.includes(c.key)}" title="Compare">${picked.includes(c.key) ? "−" : "+"}</button></td><td>${esc(c.name)}</td><td>${esc(pil(c.heritage))}</td><td>${esc(pil(c.ethos))}</td>
+          <td>${tradNames(c).map(t => `<span class="pill${t.dlc ? " dlc" : ""}">${esc(trad(t.k)?.name || t.k)}</span>`).join("")}</td><td>${esc(eraName(c.at[bm].era))}</td><td>${c.at[bm].innovations.length}</td></tr>`).join("") || '<tr><td colspan="7" class="note">No culture matches.</td></tr>'}
+        </tbody></table></div><p class="note">${rows.length} cultures</p>`;
+      $("table").querySelectorAll("th[data-sort]").forEach(t => t.onclick = () => { sortDir = sortKey === t.dataset.sort ? -sortDir : 1; sortKey = t.dataset.sort; cultTable(bm, picked); });
+    }
+    function innTiles(keys) {
+      return C.eras.map(e => { const list = keys.map(k => innBy[k]).filter(i => i && i.era === e.key); return list.length ? `<h4>${esc(e.name)} (${list.length})</h4><div class="minitiles">${list.map(i => `<span data-go="innovations/${i.key}" title="${esc(i.name)}">${i.icon ? `<img src="ck3/innovations/${i.icon}.png" alt="">` : ""}${esc(i.name)}</span>`).join("")}</div>` : ""; }).join("");
+    }
+    function cultDetail(bm, c) {
+      const at = c.at[bm];
+      return `<h3>${esc(c.name)}</h3><p class="where">${esc(pil(c.heritage))} heritage · ${esc(pil(c.language))} · ${esc(pil(c.ethos))} · ${esc(pil(c.martial_custom))}${c.parents.length ? " · from " + c.parents.map(p => cultBy[p] ? `<a data-go="cultures/${bm}/${p}">${esc(cultBy[p].name)}</a>` : esc(p)).join(", ") : ""}${c.created ? " · created " + esc(c.created.split(".")[0]) : ""}</p>
+        ${C.pillars[c.ethos]?.description ? `<p><em>${esc(C.pillars[c.ethos].description)}</em></p>` : ""}
+        <h4>Traditions</h4><ul>${tradNames(c).map(t => `<li><strong>${esc(trad(t.k)?.name || t.k)}</strong>${t.dlc ? ` <span class="note">(needs a DLC${t.fb ? "; otherwise " + esc(trad(t.fb)?.name || t.fb) : ""})</span>` : ""}${trad(t.k)?.description ? `<br><span class="note">${esc(trad(t.k).description)}</span>` : ""}</li>`).join("")}</ul>
+        <h4>Known innovations at ${esc(C.bookmarks[bm])} · ${esc(eraName(at.era))} era</h4>${innTiles(at.innovations) || '<p class="note">None yet.</p>'}`;
+    }
+    function compare(bm, keys) {
+      const cs = keys.map(k => cultBy[k]);
+      const head = `<tr><th></th>${cs.map(c => `<th>${esc(c.name)}</th>`).join("")}</tr>`;
+      const rowOf = (name, f) => `<tr><th>${name}</th>${cs.map(c => `<td>${esc(f(c))}</td>`).join("")}</tr>`;
+      const mark = (set) => `<td class="${set ? "yes" : "no"}">${set ? "✓" : "–"}</td>`;
+      const allT = [...new Set(cs.flatMap(c => tradNames(c).map(t => t.k)))].sort((a, b) => (trad(a)?.name || a).localeCompare(trad(b)?.name || b));
+      const allI = [...new Set(cs.flatMap(c => c.at[bm].innovations))].filter(k => innBy[k]);
+      const differing = allI.filter(k => cs.some(c => !c.at[bm].innovations.includes(k)));
+      return `<h3>Compare</h3><p class="where">${cs.map(c => esc(c.name)).join(" · ")} at ${esc(C.bookmarks[bm])}. <a data-go="cultures/${bm}/${keys[0]}">Back to ${esc(cs[0].name)} alone</a></p>
+        <div class="tablewrap"><table class="compare">${head}
+          ${rowOf("Heritage", c => pil(c.heritage))}${rowOf("Language", c => pil(c.language))}${rowOf("Ethos", c => pil(c.ethos))}${rowOf("Martial custom", c => pil(c.martial_custom))}${rowOf("Era", c => eraName(c.at[bm].era))}${rowOf("Innovations known", c => c.at[bm].innovations.length)}
+          <tr class="section"><th colspan="${cs.length + 1}">Traditions</th></tr>
+          ${allT.map(k => `<tr><th>${esc(trad(k)?.name || k)}</th>${cs.map(c => mark(tradNames(c).some(t => t.k === k))).join("")}</tr>`).join("")}
+          <tr class="section"><th colspan="${cs.length + 1}">Innovations they don't all share (${differing.length})</th></tr>
+          ${differing.sort((a, b) => C.eras.findIndex(e => e.key === innBy[a].era) - C.eras.findIndex(e => e.key === innBy[b].era) || innBy[a].name.localeCompare(innBy[b].name)).map(k => `<tr><th>${innBy[k].icon ? `<img src="ck3/innovations/${innBy[k].icon}.png" alt="" width="20" height="20" style="vertical-align:-5px;margin-right:4px">` : ""}${esc(innBy[k].name)} <span class="note">${esc(eraName(innBy[k].era))}</span></th>${cs.map(c => mark(c.at[bm].innovations.includes(k))).join("")}</tr>`).join("")}
+        </table></div>`;
+    }
+
+    // ---------------------------------------------------------------- events
     document.addEventListener("click", e => {
-      const chip = e.target.closest("[data-ls]");
-      if (chip) { state.lifestyle = chip.dataset.ls; state.sel = null; history.replaceState(null, "", "#" + state.lifestyle); render(); return; }
-      const hit = e.target.closest("[data-k]");
-      if (hit) select(hit.dataset.k);
+      const add = e.target.closest("[data-cmp]");
+      if (add) { e.stopPropagation(); const { rest } = route(); const bm = C.bookmarks[rest[0]] ? rest[0] : "867.1.1"; let cur = (rest[1] || "").split(",").filter(Boolean); const k = add.dataset.cmp; cur = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k].slice(-3); go("cultures/" + bm + (cur.length ? "/" + cur.join(",") : "")); return; }
+      const fg = e.target.closest("[data-fg]"); if (fg) { innFilter.group = fg.dataset.fg; render(); return; }
+      const fs = e.target.closest("[data-fs]"); if (fs) { innFilter.skill = fs.dataset.fs; render(); return; }
+      const hit = e.target.closest("[data-go]"); if (hit && !e.target.closest("select, input")) { e.preventDefault(); go(hit.dataset.go); }
     });
     document.addEventListener("keydown", e => {
-      if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node")) { e.preventDefault(); select(e.target.dataset.k); }
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node")) { e.preventDefault(); go(e.target.dataset.go); }
     });
+    if (!location.hash) history.replaceState(null, "", "#perks");
+    render();
   </script>
 </body>
 </html>
