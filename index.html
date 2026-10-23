@@ -9,10 +9,10 @@
   <style>
     :root {
       --bg: #f4efe4; --panel: #fbf8f1; --ink: #231d14; --muted: #7a6d58; --line: #d9cfbc;
-      --accent: #5b3a8c; --accent-soft: #e9e0f4; --edge: #b9ad96;
+      --accent: #5b3a8c; --accent-soft: #e9e0f4; --edge: #8f8269; --veil: rgba(251, 248, 241, 0.84);
     }
     @media (prefers-color-scheme: dark) {
-      :root { --bg: #17140f; --panel: #201c16; --ink: #eee5d3; --muted: #a1937b; --line: #3a3228; --accent: #b79be0; --accent-soft: #2b2338; --edge: #5a4f3f; }
+      :root { --bg: #17140f; --panel: #201c16; --ink: #eee5d3; --muted: #a1937b; --line: #3a3228; --accent: #b79be0; --accent-soft: #2b2338; --edge: #8c7f69; --veil: rgba(26, 22, 17, 0.80); }
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 Georgia, "Times New Roman", serif; }
@@ -22,11 +22,12 @@
     main { max-width: 1180px; margin: 0 auto; padding: 18px 20px 60px; }
     .lede { color: var(--muted); font-size: 0.92rem; margin: 0 0 16px; max-width: 70ch; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
-    .chips button { font: inherit; font-size: 0.92rem; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+    .chips button { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 0.92rem; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+    .chips img { width: 22px; height: 22px; border-radius: 50%; }
     .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
     .trees { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     @media (max-width: 860px) { .trees { grid-template-columns: 1fr; } }
-    .tree { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 10px 6px; }
+    .tree { background: linear-gradient(var(--veil), var(--veil)), var(--bd, none) center / cover, var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 10px 6px; }
     .tree h2 { margin: 0 0 4px 6px; font-size: 1rem; font-weight: normal; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
     svg.graph { width: 100%; height: auto; display: block; }
     .edge { fill: none; stroke: var(--edge); stroke-width: 2.2; }
@@ -42,6 +43,8 @@
     #detail .where { color: var(--muted); font-size: 0.85rem; margin: 0 0 10px; }
     #detail ul { margin: 6px 0 10px; padding-left: 1.2em; }
     #detail li { margin: 2px 0; }
+    #detail li img { width: 22px; height: 22px; vertical-align: -6px; margin-right: 4px; }
+    #detail li.mod { list-style: none; margin-left: -1.2em; }
     #detail .plus { color: #3c7a3c; } #detail .minus { color: #a8402d; }
     #detail a { color: var(--accent); cursor: pointer; }
     #detail .note { color: var(--muted); font-size: 0.88rem; }
@@ -81,7 +84,7 @@
 
     function render() {
       const chips = document.getElementById("chips");
-      chips.innerHTML = D.lifestyles.map(l => `<button data-ls="${l.key}" aria-pressed="${l.key === state.lifestyle}">${esc(l.name)}</button>`).join("");
+      chips.innerHTML = D.lifestyles.map(l => `<button data-ls="${l.key}" aria-pressed="${l.key === state.lifestyle}">${l.icon ? `<img src="ck3/lifestyles/${l.icon}.png" alt="">` : ""}${esc(l.name)}</button>`).join("");
       const ls = D.lifestyles.find(l => l.key === state.lifestyle);
       document.getElementById("trees").innerHTML = ls.trees.map(t => treeSvg(t)).join("");
       detail();
@@ -107,7 +110,7 @@
           <image href="ck3/icons/${p.icon}.png" x="${-NODE + 5}" y="${-NODE + 5}" width="${(NODE - 5) * 2}" height="${(NODE - 5) * 2}"/>
           <text y="${NODE + 14}">${label(p.name)}</text>
         </g>`).join("");
-      return `<section class="tree"><h2>${esc(tree.name)}</h2><svg class="graph" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(tree.name)} tree">${edges}${nodes}</svg></section>`;
+      return `<section class="tree"${tree.backdrop ? ` style="--bd: url('ck3/trees/${tree.backdrop}.jpg')"` : ""}><h2>${esc(tree.name)}</h2><svg class="graph" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(tree.name)} tree">${edges}${nodes}</svg></section>`;
     }
 
     // A name over at most two lines, so neighbours' labels don't run into each other.
@@ -122,7 +125,7 @@
     function fmt(m) {
       const v = m.kind === "percent" ? Math.round(m.value * 1000) / 10 : m.value;
       const sign = v > 0 ? "+" : "";
-      return `<span class="${v >= 0 ? "plus" : "minus"}">${sign}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}`;
+      return `${m.icon ? `<img src="ck3/icons/${m.icon}.png" alt="">` : ""}<span class="${v >= 0 ? "plus" : "minus"}">${sign}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}`;
     }
 
     function detail() {
@@ -133,10 +136,11 @@
       const requires = p.parents.length ? `<p>Requires: ${p.parents.map(k => `<a data-k="${k}">${esc(byKey[k].name)}</a>`).join(" and ")}</p>` : `<p class="note">A starting perk of the tree: nothing required.</p>`;
       const children = Object.values(byKey).filter(c => c.parents.includes(p.key));
       const leads = children.length ? `<p>Leads to: ${children.map(c => `<a data-k="${c.key}">${esc(c.name)}</a>`).join(", ")}</p>` : `<p class="note">The end of this branch.</p>`;
-      const mods = p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li>${fmt(m)}</li>`).join("")}</ul>` : "";
+      const mods = p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li class="mod">${fmt(m)}</li>`).join("")}</ul>` : "";
+      const grants = p.trait_name ? `<p><img src="ck3/icons/${p.icon}.png" alt="" width="28" height="28" style="vertical-align:-8px;margin-right:6px">Grants the <strong>${esc(p.trait_name)}</strong> trait.</p>` : "";
       const effects = p.effects.length ? `<ul>${p.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : "";
       const none = !mods && !effects && !p.description ? `<p class="note">The game's English text for this perk is built in code, so its effects aren't listed here yet.</p>` : "";
-      el.innerHTML = `<h3>${esc(p.name)}</h3><p class="where">${esc(lifestyle.name)} · ${esc(tree.name)}</p>${p.description ? `<p><em>${esc(p.description)}</em></p>` : ""}${mods}${effects}${none}${requires}${leads}`;
+      el.innerHTML = `<h3>${esc(p.name)}</h3><p class="where">${esc(lifestyle.name)} · ${esc(tree.name)}</p>${p.description ? `<p><em>${esc(p.description)}</em></p>` : ""}${grants}${mods}${effects}${none}${requires}${leads}`;
     }
 
     function select(key) {

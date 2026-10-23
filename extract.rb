@@ -101,6 +101,22 @@ end
 
 def loc(key) = clean(LOC[key])
 
+# --- Effect texts: common/effect_localization says which localization key a perk's
+# "<perk>_effect" text key stands for (its `global` line is the plain wording). ----------
+EFFECT_TEXT = {}
+Dir.glob(File.join(GAME, "common/effect_localization/*.txt")).sort.each do |file|
+  Script.parse(File.read(file, encoding: "bom|utf-8")).each do |key, body|
+    next unless key.is_a?(String) && body.is_a?(Array)
+
+    global = Script.get(body, "global")
+    EFFECT_TEXT[key] = global if global.is_a?(String)
+  end
+end
+
+def effect_text(key)
+  loc(key) || (EFFECT_TEXT[key] && loc(EFFECT_TEXT[key]))
+end
+
 # --- Named numbers: script values (common/script_values) and a file's own @constants -------
 SCRIPT_VALUES = {}
 Dir.glob(File.join(GAME, "common/script_values/*.txt")).sort.each do |file|
@@ -142,7 +158,7 @@ Dir.glob(File.join(GAME, "common/lifestyle_perks/*.txt")).sort.each do |file|
 
         if %w[custom_description_no_bullet custom_description custom_tooltip].include?(k)
           text_key = Script.get(v, "text")
-          text = text_key.is_a?(String) ? loc(text_key) : nil
+          text = text_key.is_a?(String) ? effect_text(text_key) : nil
           effect_texts << text if text && !text.empty?
         end
         walk.call(v)
@@ -168,6 +184,34 @@ Dir.glob(File.join(GAME, "common/lifestyle_perks/*.txt")).sort.each do |file|
   end
 end
 
+# --- Art: modifier icons, lifestyle icons and the painted backdrop of each tree ---------------
+ICONS = File.join(GAME, "gfx/interface/icons")
+FileUtils.mkdir_p(File.join(OUT_DIR, "trees"))
+FileUtils.mkdir_p(File.join(OUT_DIR, "lifestyles"))
+
+def convert(src, dest, *args)
+  return false unless File.exist?(src)
+
+  _out, err, status = Open3.capture3("magick", src, *args, dest)
+  warn "#{File.basename(src)}: #{err.strip}" unless status.success?
+  status.success?
+end
+
+# The game names a modifier's icon after the modifier: <key>_positive.dds / _negative.dds,
+# or the same without a _mult/_add ending.
+def modifier_icon(key, value)
+  tone = value.negative? ? "negative" : "positive"
+  [ key, key.sub(/_(mult|add)\z/, "") ].uniq.each do |base|
+    src = File.join(ICONS, "modifiers/#{base}_#{tone}.dds")
+    name = "mod_#{base}_#{tone}"
+    dest = File.join(ICON_DIR, "#{name}.png")
+    return name if File.exist?(dest) || convert(src, dest, "-resize", "40x40")
+  end
+  nil
+end
+perks.each { |perk| perk[:modifiers].each { |m| m[:icon] = modifier_icon(m[:key], m[:value]) } }
+perks.each { |perk| perk[:trait_name] = perk[:trait] && (loc("trait_#{perk[:trait]}") || loc(perk[:trait]) || humanize(perk[:trait].sub(/\Alifestyle_/, ""))) }
+
 # --- Lifestyles and trees ---------------------------------------------------------------
 lifestyles = perks.group_by { |p| p[:lifestyle] }.map do |lifestyle_key, lifestyle_perks|
   short = lifestyle_key.sub(/_lifestyle\z/, "")
@@ -176,6 +220,13 @@ lifestyles = perks.group_by { |p| p[:lifestyle] }.map do |lifestyle_key, lifesty
     { key: tree_key, name: name, perks: tree_perks.sort_by { |p| [p[:y], p[:x]] } }
   end
   { key: lifestyle_key, name: loc("#{lifestyle_key}_name") || humanize(short), trees: trees.sort_by { |t| t[:key] } }
+end
+lifestyles.each do |ls|
+  # Each lifestyle strip holds three 160x160 frames; the first is the plain emblem.
+  ls[:icon] = convert(File.join(ICONS, "lifestyles/#{ls[:key]}.dds"), File.join(OUT_DIR, "lifestyles/#{ls[:key]}.png"), "-crop", "160x160+0+0", "+repage", "-resize", "96x96") ? ls[:key] : nil
+  ls[:trees].each do |tree|
+    tree[:backdrop] = convert(File.join(ICONS, "lifestyle_tree_backgrounds/#{tree[:key]}.dds"), File.join(OUT_DIR, "trees/#{tree[:key]}.jpg"), "-resize", "360x", "-quality", "72") ? tree[:key] : nil
+  end
 end
 order = %w[diplomacy_lifestyle martial_lifestyle stewardship_lifestyle intrigue_lifestyle learning_lifestyle wanderer_lifestyle]
 lifestyles.sort_by! { |l| order.index(l[:key]) || 99 }
@@ -186,9 +237,9 @@ icon_names.each do |name|
   src = File.join(GAME, "gfx/interface/icons/lifestyles_perks/#{name}.dds")
   next unless File.exist?(src)
 
-  # The node_* files are strips of three 32x32 states (dark, lit, dark): the lit gem, in each
+  # The node_* files are strips of three 60x60 states (dark, lit, dark): the lit gem, in each
   # lifestyle's colour, is the one worth drawing. Trait icons are single images.
-  args = name.start_with?("node_") ? [ "-crop", "32x32+32+0", "+repage" ] : []
+  args = name.start_with?("node_") ? [ "-crop", "60x60+60+0", "+repage" ] : []
   _out, err, status = Open3.capture3("magick", src, *args, "-resize", "96x96", File.join(ICON_DIR, "#{name}.png"))
   warn "icon #{name}: #{err.strip}" unless status.success?
 end
