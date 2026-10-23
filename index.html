@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CK3 Lifestyle Perk Trees – Every Perk, Parent and Modifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Crusader Kings III lifestyle perk trees: all 6 lifestyles, 18 trees and 162 perks laid out as the game draws them, with what each one requires and gives. Read from the game files.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f4efe4' stroke='%235b3a8c' stroke-width='2'/%3E%3Cpath fill='%235b3a8c' d='M7 22.5 5.6 11.4l5.6 4.6L16 8l4.8 8 5.6-4.6L25 22.5Z'/%3E%3Crect x='7' y='23.6' width='18' height='2.2' rx='1' fill='%235b3a8c'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #f4efe4; --panel: #fbf8f1; --ink: #231d14; --muted: #7a6d58; --line: #d9cfbc;
+      --accent: #5b3a8c; --accent-soft: #e9e0f4; --edge: #b9ad96;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #17140f; --panel: #201c16; --ink: #eee5d3; --muted: #a1937b; --line: #3a3228; --accent: #b79be0; --accent-soft: #2b2338; --edge: #5a4f3f; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 Georgia, "Times New Roman", serif; }
+    header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+    header h1 { margin: 0; font-size: 1.25rem; font-weight: normal; }
+    header .ver { color: var(--muted); font-size: 0.8rem; }
+    main { max-width: 1180px; margin: 0 auto; padding: 18px 20px 60px; }
+    .lede { color: var(--muted); font-size: 0.92rem; margin: 0 0 16px; max-width: 70ch; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+    .chips button { font: inherit; font-size: 0.92rem; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+    .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .trees { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    @media (max-width: 860px) { .trees { grid-template-columns: 1fr; } }
+    .tree { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 10px 6px; }
+    .tree h2 { margin: 0 0 4px 6px; font-size: 1rem; font-weight: normal; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+    svg.graph { width: 100%; height: auto; display: block; }
+    .edge { fill: none; stroke: var(--edge); stroke-width: 2.2; }
+    .edge.on { stroke: var(--accent); stroke-width: 3; }
+    .node { cursor: pointer; outline: none; }
+    .node circle.ring { fill: var(--bg); stroke: var(--line); stroke-width: 2.5; }
+    .node:hover circle.ring, .node:focus-visible circle.ring { stroke: var(--accent); }
+    .node.sel circle.ring { stroke: var(--accent); stroke-width: 4; fill: var(--accent-soft); }
+    .node.dim { opacity: 0.35; }
+    .node text { fill: var(--ink); font-size: 11.5px; text-anchor: middle; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; pointer-events: none; }
+    #detail { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; min-height: 96px; }
+    #detail h3 { margin: 0 0 2px; font-weight: normal; font-size: 1.25rem; }
+    #detail .where { color: var(--muted); font-size: 0.85rem; margin: 0 0 10px; }
+    #detail ul { margin: 6px 0 10px; padding-left: 1.2em; }
+    #detail li { margin: 2px 0; }
+    #detail .plus { color: #3c7a3c; } #detail .minus { color: #a8402d; }
+    #detail a { color: var(--accent); cursor: pointer; }
+    #detail .note { color: var(--muted); font-size: 0.88rem; }
+    footer { color: var(--muted); font-size: 0.75em; padding: 8px 20px; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CK3 perk trees</h1>
+    <span class="ver" id="ver"></span>
+  </header>
+  <main>
+    <p class="lede">Every lifestyle perk in Crusader Kings III, laid out the way the game draws each tree. Pick a lifestyle, then a perk to see what it requires and what it gives.</p>
+    <div class="chips" id="chips" role="group" aria-label="Lifestyle"></div>
+    <div class="trees" id="trees"></div>
+    <div id="detail" aria-live="polite"><p class="note">Select a perk.</p></div>
+  </main>
+  <footer>Unofficial fan page. Data and icons come from the Crusader Kings III game files<span id="gv"></span>; Crusader Kings III is © Paradox Interactive.</footer>
+
+  <script>
+    const NODE = 24, DX = 100, DY = 96, PADX = 64, PADY = 34;
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    let D, byKey = {}, treeOf = {}, state = { lifestyle: null, sel: null };
+
+    fetch("ck3/data.json?v=" + Date.now()).then(r => { if (!r.ok) throw new Error("data.json: HTTP " + r.status); return r.json(); }).then(data => {
+      D = data;
+      document.getElementById("gv").textContent = D.game_version ? " (version " + D.game_version + ")" : "";
+      document.getElementById("ver").textContent = D.lifestyles.reduce((n, l) => n + l.trees.reduce((m, t) => m + t.perks.length, 0), 0) + " perks · 18 trees · 6 lifestyles";
+      for (const l of D.lifestyles) for (const t of l.trees) for (const p of t.perks) { byKey[p.key] = p; treeOf[p.key] = { lifestyle: l, tree: t }; }
+      const hash = decodeURIComponent(location.hash.slice(1));
+      const [ls, perk] = hash.split("/");
+      state.lifestyle = (D.lifestyles.find(l => l.key === ls) || D.lifestyles[0]).key;
+      state.sel = byKey[perk] ? perk : null;
+      if (state.sel) state.lifestyle = treeOf[state.sel].lifestyle.key;
+      render();
+    }).catch(e => { document.getElementById("trees").innerHTML = `<p>Couldn't load the data (${esc(e.message)}). Run <code>ruby extract.rb</code> first.</p>`; });
+
+    function render() {
+      const chips = document.getElementById("chips");
+      chips.innerHTML = D.lifestyles.map(l => `<button data-ls="${l.key}" aria-pressed="${l.key === state.lifestyle}">${esc(l.name)}</button>`).join("");
+      const ls = D.lifestyles.find(l => l.key === state.lifestyle);
+      document.getElementById("trees").innerHTML = ls.trees.map(t => treeSvg(t)).join("");
+      detail();
+    }
+
+    function treeSvg(tree) {
+      const xs = tree.perks.map(p => p.x), ys = tree.perks.map(p => p.y);
+      const minx = Math.min(...xs), maxx = Math.max(...xs), maxy = Math.max(...ys), miny = Math.min(...ys);
+      const px = p => PADX + (p.x - minx) * DX, py = p => PADY + (p.y - miny) * DY;
+      const W = PADX * 2 + (maxx - minx) * DX, H = PADY * 2 + (maxy - miny) * DY + 22;
+      const chain = new Set(); // the selected perk and everything it requires
+      const walk = k => { if (!k || chain.has(k)) return; chain.add(k); (byKey[k]?.parents || []).forEach(walk); };
+      walk(state.sel);
+      const edges = tree.perks.flatMap(p => p.parents.map(pk => {
+        const a = byKey[pk]; if (!a || treeOf[pk].tree !== tree) return "";
+        const x1 = px(a), y1 = py(a), x2 = px(p), y2 = py(p), my = (y1 + y2) / 2;
+        const on = chain.has(p.key) && chain.has(pk);
+        return `<path class="edge${on ? " on" : ""}" d="M${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}"/>`;
+      })).join("");
+      const nodes = tree.perks.map(p => `
+        <g class="node${p.key === state.sel ? " sel" : ""}" data-k="${p.key}" tabindex="0" role="button" aria-label="${esc(p.name)}" transform="translate(${px(p)} ${py(p)})">
+          <circle class="ring" r="${NODE}"/>
+          <image href="ck3/icons/${p.icon}.png" x="${-NODE + 5}" y="${-NODE + 5}" width="${(NODE - 5) * 2}" height="${(NODE - 5) * 2}"/>
+          <text y="${NODE + 14}">${label(p.name)}</text>
+        </g>`).join("");
+      return `<section class="tree"><h2>${esc(tree.name)}</h2><svg class="graph" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(tree.name)} tree">${edges}${nodes}</svg></section>`;
+    }
+
+    // A name over at most two lines, so neighbours' labels don't run into each other.
+    function label(name) {
+      const words = name.split(" "); let first = "", i = 0;
+      while (i < words.length && (first + " " + words[i]).trim().length <= 13) { first = (first + " " + words[i]).trim(); i++; }
+      if (!first) { first = words[0]; i = 1; }
+      const rest = words.slice(i).join(" ");
+      return rest ? `<tspan x="0">${esc(first)}</tspan><tspan x="0" dy="1.15em">${esc(rest)}</tspan>` : esc(first);
+    }
+
+    function fmt(m) {
+      const v = m.kind === "percent" ? Math.round(m.value * 1000) / 10 : m.value;
+      const sign = v > 0 ? "+" : "";
+      return `<span class="${v >= 0 ? "plus" : "minus"}">${sign}${v}${m.kind === "percent" ? "%" : ""}</span> ${esc(m.label)}`;
+    }
+
+    function detail() {
+      const el = document.getElementById("detail");
+      const p = byKey[state.sel];
+      if (!p) { el.innerHTML = '<p class="note">Select a perk to see what it requires and what it gives.</p>'; return; }
+      const { lifestyle, tree } = treeOf[p.key];
+      const requires = p.parents.length ? `<p>Requires: ${p.parents.map(k => `<a data-k="${k}">${esc(byKey[k].name)}</a>`).join(" and ")}</p>` : `<p class="note">A starting perk of the tree: nothing required.</p>`;
+      const children = Object.values(byKey).filter(c => c.parents.includes(p.key));
+      const leads = children.length ? `<p>Leads to: ${children.map(c => `<a data-k="${c.key}">${esc(c.name)}</a>`).join(", ")}</p>` : `<p class="note">The end of this branch.</p>`;
+      const mods = p.modifiers.length ? `<ul>${p.modifiers.map(m => `<li>${fmt(m)}</li>`).join("")}</ul>` : "";
+      const effects = p.effects.length ? `<ul>${p.effects.map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : "";
+      const none = !mods && !effects && !p.description ? `<p class="note">The game's English text for this perk is built in code, so its effects aren't listed here yet.</p>` : "";
+      el.innerHTML = `<h3>${esc(p.name)}</h3><p class="where">${esc(lifestyle.name)} · ${esc(tree.name)}</p>${p.description ? `<p><em>${esc(p.description)}</em></p>` : ""}${mods}${effects}${none}${requires}${leads}`;
+    }
+
+    function select(key) {
+      state.sel = key; state.lifestyle = treeOf[key].lifestyle.key;
+      history.replaceState(null, "", "#" + state.lifestyle + "/" + key);
+      render();
+    }
+
+    document.addEventListener("click", e => {
+      const chip = e.target.closest("[data-ls]");
+      if (chip) { state.lifestyle = chip.dataset.ls; state.sel = null; history.replaceState(null, "", "#" + state.lifestyle); render(); return; }
+      const hit = e.target.closest("[data-k]");
+      if (hit) select(hit.dataset.k);
+    });
+    document.addEventListener("keydown", e => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node")) { e.preventDefault(); select(e.target.dataset.k); }
+    });
+  </script>
+</body>
+</html>
