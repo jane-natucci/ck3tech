@@ -1,6 +1,7 @@
 # Generated from Paradox's game files by extract.rb -- deployed to the site, never
 # committed (it's Paradox's data, art and text). Only our own files in ck3/ would be tracked.
 /ck3/*
+!/ck3/og-image.jpg
 .DS_Store
 
 # Melted saves for inspection -- big, and someone's game; never committed.

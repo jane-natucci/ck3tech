@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ck3tech.jane.berlin/sitemap.xml

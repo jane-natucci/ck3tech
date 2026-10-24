@@ -13,12 +13,40 @@
   <meta property="og:description" content="Crusader Kings III from the game files: every lifestyle perk tree, all cultural innovations by era, a side-by-side comparison of cultures at the 867, 1066 and 1178 starts, and every dynasty legacy.">
   <meta property="og:url" content="https://ck3tech.jane.berlin/">
 
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://ck3tech.jane.berlin/ck3/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The Crusader Kings III Diplomacy lifestyle perk trees">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://ck3tech.jane.berlin/ck3/og-image.jpg">
   <meta name="twitter:title" content="CK3 Tech – Perk Trees, Innovations, Cultures and Legacies">
   <meta name="twitter:description" content="Lifestyle perk trees, cultural innovations by era and a culture comparison for Crusader Kings III.">
   <meta name="description" content="Crusader Kings III reference read from the game files: the 18 lifestyle perk trees, all cultural innovations by era, a comparison of every culture's traditions and innovations at the 867, 1066 and 1178 starts, and the dynasty legacy tracks.">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "CK3 Tech",
+      "url": "https://ck3tech.jane.berlin/",
+      "description": "Crusader Kings III from the game files: every lifestyle perk tree, all cultural innovations by era, a side-by-side comparison of cultures at the 867, 1066 and 1178 starts, and every dynasty legacy.",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "about": { "@type": "VideoGame", "name": "Crusader Kings III" },
+      "author": { "@type": "Person", "name": "Jane Natucci", "url": "https://jane.berlin/" }
+    }
+  </script>
+  <!--seo:head-->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23f4efe4' stroke='%235b3a8c' stroke-width='2'/%3E%3Cg transform='translate(0 -.9)'%3E%3Cpath fill='%235b3a8c' d='M7 22.5 5.6 11.4l5.6 4.6L16 8l4.8 8 5.6-4.6L25 22.5Z'/%3E%3Crect x='7' y='23.6' width='18' height='2.2' rx='1' fill='%235b3a8c'/%3E%3C/g%3E%3C/svg%3E">
   <style>
+    /* The plain-text summary of the open page, for people and search engines that read the page's own text. */
+    .seo-about { padding: 12px 20px 4px; font-size: 0.82em; line-height: 1.5; color: var(--muted); border-top: 1px solid var(--line); }
+    .seo-about summary { cursor: pointer; color: var(--ink); margin-bottom: 6px; }
+    .seo-about p { margin: 0 0 6px; max-width: 110ch; }
+    .seo-about a { color: var(--accent); }
     :root {
       --bg: #f4efe4; --panel: #fbf8f1; --ink: #231d14; --muted: #7a6d58; --line: #d9cfbc;
       --accent: #5b3a8c; --accent-soft: #e9e0f4; --edge: #8f8269; --veil: rgba(251, 248, 241, 0.84);
@@ -141,6 +169,7 @@
     <span class="ver" id="ver"></span>
   </header>
   <main id="app"><p class="lede">Loading…</p></main>
+  <!--seo:about-->
   <footer><a id="buildLink" href="https://github.com/jane-natucci/ck3tech/commit/__BUILD_SHA__" target="_blank" rel="noopener" title="View the deployed source commit on GitHub" style="float:right;color:inherit">build __BUILD_LABEL__</a>Unofficial fan page. Data and icons come from the Crusader Kings III game files<span id="gv"></span>; Crusader Kings III is © Paradox Interactive.</footer>
 
   <script>
@@ -155,7 +184,9 @@
     // ---------------------------------------------------------------- routing
     // #perks[/<lifestyle>[/<perk>]]  #innovations[/<key>]  #cultures[/<bookmark>[/<culture>[,<culture>...]]]  #legacies[/<track>[/<perk>]]
     const VIEWS = ["perks", "innovations", "cultures", "legacies"];
-    const route = () => { const [view = "perks", ...rest] = decodeURIComponent(location.hash.slice(1)).split("/"); return { view: VIEWS.includes(view) ? view : "perks", rest }; };
+    // A page's own address (/culture/akan) opens on it: the page says which part of the app it is.
+    const startHash = () => location.hash.slice(1) || document.querySelector('meta[name="initial-hash"]')?.content || "";
+    const route = () => { const [view = "perks", ...rest] = decodeURIComponent(startHash()).split("/"); return { view: VIEWS.includes(view) ? view : "perks", rest }; };
     const go = (hash) => { history.replaceState(null, "", "#" + hash); render(); };
 
     async function render() {
@@ -441,7 +472,7 @@
       if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".node, .track li")) { e.preventDefault(); go(e.target.dataset.go); }
     });
     if (document.getElementById("buildLink").href.includes("__BUILD" + "_SHA__")) document.getElementById("buildLink").remove();
-    if (!location.hash) history.replaceState(null, "", "#perks");
+    if (!location.hash && !startHash()) history.replaceState(null, "", "#perks");
     render();
   </script>
   <script>
