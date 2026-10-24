@@ -116,6 +116,33 @@ end
 # Slugs must be unique within their folder.
 pages.group_by { |p| p[:path] }.each_value { |same| same.drop(1).each_with_index { |p, i| p[:path] = "#{p[:path]}-#{i + 2}" } }
 
+# The script a generated page carries so that its address and its "About" text stay honest: while the app shows the
+# page's own item the address keeps the page's path; once the app moves on to another country (or culture, perk
+# tree ...) the address becomes the app's normal /#... one and the About text, which was about the first, goes.
+def entry_script(path:, key:, key_js:)
+  <<~JS
+    <script>
+      (() => {
+        const ENTRY = #{JSON.generate(key)}, PATH = #{JSON.generate(path)}, keyOf = #{key_js};
+        const settle = (url) => {
+          if (typeof url !== "string" || !url.includes("#")) return url;
+          const hash = url.slice(url.indexOf("#"));
+          if (hash.length < 2 || keyOf(hash) === ENTRY) return PATH + hash;
+          document.querySelector(".seo-about")?.remove();
+          return "/" + hash;
+        };
+        for (const m of ["replaceState", "pushState"]) {
+          const original = history[m].bind(history);
+          history[m] = (state, title, url) => original(state, title, settle(url));
+        }
+        const tidy = () => { if (location.hash.length > 1) history.replaceState(history.state, "", location.hash); };
+        document.addEventListener("DOMContentLoaded", tidy);
+        window.addEventListener("hashchange", tidy); // a link or an edited address, which don't go through the history calls above
+      })();
+    </script>
+  JS
+end
+
 # --- The pages -------------------------------------------------------------------------------------------------------------
 %w[perks legacies culture].each { |d| FileUtils.mkdir_p(File.join(out, d)) }
 pages.each do |pg|
@@ -130,7 +157,10 @@ pages.each do |pg|
   html = retag(template, title: pg[:title], description: pg[:description][0, 300], url: url)
   html = html.sub("<!--seo:about-->", block)
   html = html.sub("<head>", %(<head>\n  <base href="/">)) # the app loads its data and pictures by relative address, which must not resolve under /country/ or /culture/
-  html = html.sub("<!--seo:head-->", %(<meta name="initial-hash" content="#{h(pg[:hash])}">\n  ) + ld({
+  parts = pg[:hash].split("/")
+  entry_key = parts[0] == "cultures" ? "cultures/#{parts[2]}" : "#{parts[0]}/#{parts[1]}"
+  key_js = '(h) => { const p = decodeURIComponent(h.slice(1)).split("/"); return p[0] === "cultures" ? "cultures/" + (p[2] || "") : p[0] + "/" + (p[1] || ""); }'
+  html = html.sub("<!--seo:head-->", %(<meta name="initial-hash" content="#{h(pg[:hash])}">\n  ) + entry_script(path: "/#{pg[:path]}", key: entry_key, key_js: key_js) + ld({
     "@context" => "https://schema.org", "@type" => "WebPage", "name" => pg[:title], "url" => url,
     "description" => pg[:description][0, 300], "inLanguage" => "en",
     "isPartOf" => { "@type" => "WebSite", "name" => "#{SHORT} Tech", "url" => "#{SITE}/" },
