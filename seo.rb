@@ -129,6 +129,7 @@ pages.each do |pg|
   HTML
   html = retag(template, title: pg[:title], description: pg[:description][0, 300], url: url)
   html = html.sub("<!--seo:about-->", block)
+  html = html.sub("<head>", %(<head>\n  <base href="/">)) # the app loads its data and pictures by relative address, which must not resolve under /country/ or /culture/
   html = html.sub("<!--seo:head-->", %(<meta name="initial-hash" content="#{h(pg[:hash])}">\n  ) + ld({
     "@context" => "https://schema.org", "@type" => "WebPage", "name" => pg[:title], "url" => url,
     "description" => pg[:description][0, 300], "inLanguage" => "en",
